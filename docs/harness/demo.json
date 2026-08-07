@@ -1,0 +1,801 @@
+{
+  "critical": {
+    "generatedAt": "2026-08-07T22:23:12Z",
+    "sourceId": "github",
+    "displayName": "GitHub",
+    "pageUrl": "https://www.githubstatus.com",
+    "overall": "critical",
+    "loud": true,
+    "snapshot": {
+      "sourceId": "github",
+      "displayName": "GitHub",
+      "pageUrl": "https://www.githubstatus.com",
+      "overall": "critical",
+      "indicator": "critical",
+      "indicatorRaw": "critical",
+      "indicatorDescription": "Major Service Outage",
+      "keyComponents": [
+        {
+          "name": "Git Operations",
+          "status": "major_outage",
+          "severity": "critical",
+          "key": true,
+          "description": "Performance of git clones, pulls, pushes, and associated operations"
+        },
+        {
+          "name": "API Requests",
+          "status": "major_outage",
+          "severity": "critical",
+          "key": true,
+          "description": "Requests for GitHub APIs"
+        },
+        {
+          "name": "Webhooks",
+          "status": "major_outage",
+          "severity": "critical",
+          "key": true,
+          "description": "Real time HTTP callbacks of user-generated and system events"
+        },
+        {
+          "name": "Actions",
+          "status": "major_outage",
+          "severity": "critical",
+          "key": true,
+          "description": "Workflows, Compute and Orchestration for GitHub Actions"
+        },
+        {
+          "name": "Pull Requests",
+          "status": "major_outage",
+          "severity": "critical",
+          "key": true,
+          "description": "Requests for Pull Requests on GitHub.com"
+        },
+        {
+          "name": "Issues",
+          "status": "major_outage",
+          "severity": "critical",
+          "key": true,
+          "description": "Requests for Issues on GitHub.com"
+        }
+      ],
+      "otherComponents": [
+        {
+          "name": "Packages",
+          "status": "partial_outage",
+          "severity": "major",
+          "key": false,
+          "description": "API requests and webhook delivery for GitHub Packages"
+        },
+        {
+          "name": "Pages",
+          "status": "major_outage",
+          "severity": "critical",
+          "key": false,
+          "description": "Frontend application and API servers for Pages builds"
+        },
+        {
+          "name": "Copilot",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        },
+        {
+          "name": "Codespaces",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Orchestration and Compute for GitHub Codespaces"
+        },
+        {
+          "name": "Copilot AI Model Providers",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        }
+      ],
+      "incidents": [
+        {
+          "id": "9xq0vrt5mm8d",
+          "name": "Widespread outage affecting github.com",
+          "status": "investigating",
+          "impact": "critical",
+          "severity": "critical",
+          "url": "https://stspg.io/9xq0vrt5mm8d",
+          "startedAt": "2026-08-07T22:05:12.000Z",
+          "latestUpdate": "github.com and the GitHub API are returning errors for the majority of requests. Git operations over both HTTPS \u0026 SSH are failing. We are all hands on deck.",
+          "latestUpdateAt": "2026-08-07T22:09:58.771Z",
+          "components": [
+            "Git Operations",
+            "Webhooks",
+            "API Requests",
+            "Issues",
+            "Pull Requests",
+            "Actions"
+          ],
+          "affectsKey": true
+        }
+      ],
+      "maintenances": [],
+      "pageUpdatedAt": "2026-08-07T22:10:02.004Z"
+    },
+    "stale": false,
+    "consecutiveFailures": 0,
+    "transition": {
+      "id": "72d0f6e2737dfc92",
+      "sourceId": "github",
+      "kind": "degraded",
+      "from": "operational",
+      "to": "critical",
+      "title": "GitHub is having a major outage",
+      "detail": "Widespread outage affecting github.com",
+      "at": "2026-08-07T22:23:12Z"
+    },
+    "settings": {
+      "notifyOnTransition": true
+    },
+    "demo": "critical"
+  },
+  "degraded": {
+    "generatedAt": "2026-08-07T22:23:12Z",
+    "sourceId": "github",
+    "displayName": "GitHub",
+    "pageUrl": "https://www.githubstatus.com",
+    "overall": "minor",
+    "loud": true,
+    "snapshot": {
+      "sourceId": "github",
+      "displayName": "GitHub",
+      "pageUrl": "https://www.githubstatus.com",
+      "overall": "minor",
+      "indicator": "minor",
+      "indicatorRaw": "minor",
+      "indicatorDescription": "Minor Service Outage",
+      "keyComponents": [
+        {
+          "name": "Git Operations",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Performance of git clones, pulls, pushes, and associated operations"
+        },
+        {
+          "name": "API Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for GitHub APIs"
+        },
+        {
+          "name": "Webhooks",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Real time HTTP callbacks of user-generated and system events"
+        },
+        {
+          "name": "Actions",
+          "status": "degraded_performance",
+          "severity": "minor",
+          "key": true,
+          "description": "Workflows, Compute and Orchestration for GitHub Actions"
+        },
+        {
+          "name": "Pull Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Pull Requests on GitHub.com"
+        },
+        {
+          "name": "Issues",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Issues on GitHub.com"
+        }
+      ],
+      "otherComponents": [
+        {
+          "name": "Packages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "API requests and webhook delivery for GitHub Packages"
+        },
+        {
+          "name": "Pages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Frontend application and API servers for Pages builds"
+        },
+        {
+          "name": "Copilot",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        },
+        {
+          "name": "Codespaces",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Orchestration and Compute for GitHub Codespaces"
+        },
+        {
+          "name": "Copilot AI Model Providers",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        }
+      ],
+      "incidents": [
+        {
+          "id": "3q2b8kxwzp1n",
+          "name": "Delays in GitHub Actions workflow runs",
+          "status": "investigating",
+          "impact": "minor",
+          "severity": "minor",
+          "url": "https://stspg.io/3q2b8kxwzp1n",
+          "startedAt": "2026-08-07T21:29:47.000Z",
+          "latestUpdate": "We are continuing to investigate elevated queue times for Actions workflow runs. Hosted runners are being provisioned, but jobs may wait several minutes before starting.\n\nSelf-hosted runners are unaffected.",
+          "latestUpdateAt": "2026-08-07T21:52:40.905Z",
+          "components": [
+            "Actions"
+          ],
+          "affectsKey": true
+        }
+      ],
+      "maintenances": [],
+      "pageUpdatedAt": "2026-08-07T21:58:14.201Z"
+    },
+    "stale": false,
+    "consecutiveFailures": 0,
+    "transition": {
+      "id": "7a24a663111c497a",
+      "sourceId": "github",
+      "kind": "degraded",
+      "from": "operational",
+      "to": "minor",
+      "title": "GitHub is degraded",
+      "detail": "Delays in GitHub Actions workflow runs",
+      "at": "2026-08-07T22:23:12Z"
+    },
+    "settings": {
+      "notifyOnTransition": true
+    },
+    "demo": "degraded"
+  },
+  "healthy": {
+    "generatedAt": "2026-08-07T22:23:12Z",
+    "sourceId": "github",
+    "displayName": "GitHub",
+    "pageUrl": "https://www.githubstatus.com",
+    "overall": "operational",
+    "loud": false,
+    "snapshot": {
+      "sourceId": "github",
+      "displayName": "GitHub",
+      "pageUrl": "https://www.githubstatus.com",
+      "overall": "operational",
+      "indicator": "operational",
+      "indicatorRaw": "none",
+      "indicatorDescription": "All Systems Operational",
+      "keyComponents": [
+        {
+          "name": "Git Operations",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Performance of git clones, pulls, pushes, and associated operations"
+        },
+        {
+          "name": "API Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for GitHub APIs"
+        },
+        {
+          "name": "Webhooks",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Real time HTTP callbacks of user-generated and system events"
+        },
+        {
+          "name": "Actions",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Workflows, Compute and Orchestration for GitHub Actions"
+        },
+        {
+          "name": "Pull Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Pull Requests on GitHub.com"
+        },
+        {
+          "name": "Issues",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Issues on GitHub.com"
+        }
+      ],
+      "otherComponents": [
+        {
+          "name": "Packages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "API requests and webhook delivery for GitHub Packages"
+        },
+        {
+          "name": "Pages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Frontend application and API servers for Pages builds"
+        },
+        {
+          "name": "Copilot",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        },
+        {
+          "name": "Codespaces",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Orchestration and Compute for GitHub Codespaces"
+        },
+        {
+          "name": "Copilot AI Model Providers",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        }
+      ],
+      "incidents": [],
+      "maintenances": [],
+      "pageUpdatedAt": "2026-08-07T18:46:07.744Z"
+    },
+    "stale": false,
+    "consecutiveFailures": 0,
+    "transition": {
+      "id": "9e854b0eee7e9048",
+      "sourceId": "github",
+      "kind": "recovered",
+      "from": "major",
+      "to": "operational",
+      "title": "GitHub is back to normal",
+      "detail": "All key components are operational again.",
+      "at": "2026-08-07T22:23:12Z"
+    },
+    "settings": {
+      "notifyOnTransition": true
+    },
+    "demo": "healthy"
+  },
+  "incident": {
+    "generatedAt": "2026-08-07T22:23:12Z",
+    "sourceId": "github",
+    "displayName": "GitHub",
+    "pageUrl": "https://www.githubstatus.com",
+    "overall": "major",
+    "loud": true,
+    "snapshot": {
+      "sourceId": "github",
+      "displayName": "GitHub",
+      "pageUrl": "https://www.githubstatus.com",
+      "overall": "major",
+      "indicator": "major",
+      "indicatorRaw": "major",
+      "indicatorDescription": "Partial System Outage",
+      "keyComponents": [
+        {
+          "name": "Git Operations",
+          "status": "partial_outage",
+          "severity": "major",
+          "key": true,
+          "description": "Performance of git clones, pulls, pushes, and associated operations"
+        },
+        {
+          "name": "API Requests",
+          "status": "degraded_performance",
+          "severity": "minor",
+          "key": true,
+          "description": "Requests for GitHub APIs"
+        },
+        {
+          "name": "Webhooks",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Real time HTTP callbacks of user-generated and system events"
+        },
+        {
+          "name": "Actions",
+          "status": "partial_outage",
+          "severity": "major",
+          "key": true,
+          "description": "Workflows, Compute and Orchestration for GitHub Actions"
+        },
+        {
+          "name": "Pull Requests",
+          "status": "degraded_performance",
+          "severity": "minor",
+          "key": true,
+          "description": "Requests for Pull Requests on GitHub.com"
+        },
+        {
+          "name": "Issues",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Issues on GitHub.com"
+        }
+      ],
+      "otherComponents": [
+        {
+          "name": "Packages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "API requests and webhook delivery for GitHub Packages"
+        },
+        {
+          "name": "Pages",
+          "status": "degraded_performance",
+          "severity": "minor",
+          "key": false,
+          "description": "Frontend application and API servers for Pages builds"
+        },
+        {
+          "name": "Copilot",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        },
+        {
+          "name": "Codespaces",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Orchestration and Compute for GitHub Codespaces"
+        },
+        {
+          "name": "Copilot AI Model Providers",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        }
+      ],
+      "incidents": [
+        {
+          "id": "7hn4dcm2ktqf",
+          "name": "Incident with Git Operations and Actions",
+          "status": "identified",
+          "impact": "major",
+          "severity": "major",
+          "url": "https://stspg.io/7hn4dcm2ktqf",
+          "startedAt": "2026-08-07T21:41:00.000Z",
+          "latestUpdate": "We have identified a degradation in a shared storage tier affecting git pushes and Actions job orchestration. Pushes to some repositories are failing with a 500, and queued workflow runs are not starting.\n\nMitigation is in progress. Retrying a failed push is safe.",
+          "latestUpdateAt": "2026-08-07T22:03:12.771Z",
+          "components": [
+            "Git Operations",
+            "API Requests",
+            "Pull Requests",
+            "Actions"
+          ],
+          "affectsKey": true
+        }
+      ],
+      "maintenances": [],
+      "pageUpdatedAt": "2026-08-07T22:04:51.663Z"
+    },
+    "stale": false,
+    "consecutiveFailures": 0,
+    "transition": {
+      "id": "5398fafcfded7f42",
+      "sourceId": "github",
+      "kind": "degraded",
+      "from": "operational",
+      "to": "major",
+      "title": "GitHub has a partial outage",
+      "detail": "Incident with Git Operations and Actions",
+      "at": "2026-08-07T22:23:12Z"
+    },
+    "settings": {
+      "notifyOnTransition": true
+    },
+    "demo": "incident"
+  },
+  "maintenance": {
+    "generatedAt": "2026-08-07T22:23:12Z",
+    "sourceId": "github",
+    "displayName": "GitHub",
+    "pageUrl": "https://www.githubstatus.com",
+    "overall": "operational",
+    "loud": false,
+    "snapshot": {
+      "sourceId": "github",
+      "displayName": "GitHub",
+      "pageUrl": "https://www.githubstatus.com",
+      "overall": "operational",
+      "indicator": "operational",
+      "indicatorRaw": "none",
+      "indicatorDescription": "All Systems Operational",
+      "keyComponents": [
+        {
+          "name": "Git Operations",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Performance of git clones, pulls, pushes, and associated operations"
+        },
+        {
+          "name": "API Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for GitHub APIs"
+        },
+        {
+          "name": "Webhooks",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Real time HTTP callbacks of user-generated and system events"
+        },
+        {
+          "name": "Actions",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Workflows, Compute and Orchestration for GitHub Actions"
+        },
+        {
+          "name": "Pull Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Pull Requests on GitHub.com"
+        },
+        {
+          "name": "Issues",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Issues on GitHub.com"
+        }
+      ],
+      "otherComponents": [
+        {
+          "name": "Packages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "API requests and webhook delivery for GitHub Packages"
+        },
+        {
+          "name": "Pages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Frontend application and API servers for Pages builds"
+        },
+        {
+          "name": "Copilot",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        },
+        {
+          "name": "Codespaces",
+          "status": "under_maintenance",
+          "severity": "maintenance",
+          "key": false,
+          "description": "Orchestration and Compute for GitHub Codespaces"
+        },
+        {
+          "name": "Copilot AI Model Providers",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        }
+      ],
+      "incidents": [],
+      "maintenances": [
+        {
+          "id": "mnt1upcoming",
+          "name": "Scheduled maintenance for GitHub Actions hosted runners",
+          "status": "scheduled",
+          "impact": "maintenance",
+          "severity": "maintenance",
+          "url": "https://stspg.io/mnt1upcoming",
+          "startedAt": "2026-08-05T09:00:00.000Z",
+          "scheduledFor": "2026-08-09T02:00:00.000Z",
+          "scheduledUntil": "2026-08-09T06:00:00.000Z",
+          "latestUpdate": "We will be performing maintenance on the hosted runner pool. Workflow runs may queue for longer than usual during the window.",
+          "latestUpdateAt": "2026-08-05T09:00:00.000Z",
+          "components": [
+            "Actions"
+          ],
+          "affectsKey": true
+        },
+        {
+          "id": "mnt2running",
+          "name": "Codespaces regional maintenance",
+          "status": "in_progress",
+          "impact": "maintenance",
+          "severity": "maintenance",
+          "url": "https://stspg.io/mnt2running",
+          "startedAt": "2026-08-07T20:00:00.000Z",
+          "scheduledFor": "2026-08-07T20:00:00.000Z",
+          "scheduledUntil": "2026-08-07T23:00:00.000Z",
+          "latestUpdate": "Maintenance is underway.",
+          "latestUpdateAt": "2026-08-07T20:00:00.000Z",
+          "components": [
+            "Codespaces"
+          ],
+          "affectsKey": false
+        }
+      ],
+      "pageUpdatedAt": "2026-08-07T20:00:00.000Z"
+    },
+    "stale": false,
+    "consecutiveFailures": 0,
+    "transition": {
+      "id": "9e854b0eee7e9048",
+      "sourceId": "github",
+      "kind": "recovered",
+      "from": "major",
+      "to": "operational",
+      "title": "GitHub is back to normal",
+      "detail": "All key components are operational again.",
+      "at": "2026-08-07T22:23:12Z"
+    },
+    "settings": {
+      "notifyOnTransition": true
+    },
+    "demo": "maintenance"
+  },
+  "stale": {
+    "generatedAt": "2026-08-07T22:23:12Z",
+    "sourceId": "github",
+    "displayName": "GitHub",
+    "pageUrl": "https://www.githubstatus.com",
+    "overall": "minor",
+    "loud": true,
+    "snapshot": {
+      "sourceId": "github",
+      "displayName": "GitHub",
+      "pageUrl": "https://www.githubstatus.com",
+      "overall": "minor",
+      "indicator": "minor",
+      "indicatorRaw": "minor",
+      "indicatorDescription": "Minor Service Outage",
+      "keyComponents": [
+        {
+          "name": "Git Operations",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Performance of git clones, pulls, pushes, and associated operations"
+        },
+        {
+          "name": "API Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for GitHub APIs"
+        },
+        {
+          "name": "Webhooks",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Real time HTTP callbacks of user-generated and system events"
+        },
+        {
+          "name": "Actions",
+          "status": "degraded_performance",
+          "severity": "minor",
+          "key": true,
+          "description": "Workflows, Compute and Orchestration for GitHub Actions"
+        },
+        {
+          "name": "Pull Requests",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Pull Requests on GitHub.com"
+        },
+        {
+          "name": "Issues",
+          "status": "operational",
+          "severity": "operational",
+          "key": true,
+          "description": "Requests for Issues on GitHub.com"
+        }
+      ],
+      "otherComponents": [
+        {
+          "name": "Packages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "API requests and webhook delivery for GitHub Packages"
+        },
+        {
+          "name": "Pages",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Frontend application and API servers for Pages builds"
+        },
+        {
+          "name": "Copilot",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        },
+        {
+          "name": "Codespaces",
+          "status": "operational",
+          "severity": "operational",
+          "key": false,
+          "description": "Orchestration and Compute for GitHub Codespaces"
+        },
+        {
+          "name": "Copilot AI Model Providers",
+          "status": "operational",
+          "severity": "operational",
+          "key": false
+        }
+      ],
+      "incidents": [
+        {
+          "id": "3q2b8kxwzp1n",
+          "name": "Delays in GitHub Actions workflow runs",
+          "status": "investigating",
+          "impact": "minor",
+          "severity": "minor",
+          "url": "https://stspg.io/3q2b8kxwzp1n",
+          "startedAt": "2026-08-07T21:29:47.000Z",
+          "latestUpdate": "We are continuing to investigate elevated queue times for Actions workflow runs. Hosted runners are being provisioned, but jobs may wait several minutes before starting.\n\nSelf-hosted runners are unaffected.",
+          "latestUpdateAt": "2026-08-07T21:52:40.905Z",
+          "components": [
+            "Actions"
+          ],
+          "affectsKey": true
+        }
+      ],
+      "maintenances": [],
+      "pageUpdatedAt": "2026-08-07T21:58:14.201Z"
+    },
+    "stale": true,
+    "fetchedAt": "2026-08-07T22:16:12Z",
+    "error": "githubstatus.com unreachable (fixture)",
+    "consecutiveFailures": 3,
+    "transition": {
+      "id": "7a24a663111c497a",
+      "sourceId": "github",
+      "kind": "degraded",
+      "from": "operational",
+      "to": "minor",
+      "title": "GitHub is degraded",
+      "detail": "Delays in GitHub Actions workflow runs",
+      "at": "2026-08-07T22:23:12Z"
+    },
+    "settings": {
+      "notifyOnTransition": true
+    },
+    "demo": "stale"
+  }
+}

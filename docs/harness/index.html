@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GitHub Status — render harness</title>
+    <!--
+      Standalone render harness for screenshots and eyeballing.
+
+      It loads the REAL plugin bundle.js + plugin.css and feeds them the REAL
+      backend payloads (docs/harness/demo.json, dumped straight out of the
+      status webhook by server/dump_demo_test.go), with a stub host SDK and a
+      minimal app shell.
+
+      The theme variables below are copied verbatim from kandev's
+      apps/web/app/globals.css, because this plugin's entire palette is
+      color-mix() over those tokens — a hand-approximated stub would prove
+      nothing about how it actually renders.
+
+      Query params:
+        ?state=healthy|degraded|incident|critical|maintenance|stale
+        &theme=light|dark
+        &view=app|modal|settings
+        &toast=1
+    -->
+    <style>
+      /* ---- kandev theme tokens (verbatim from apps/web/app/globals.css) ---- */
+      :root {
+        --background: oklch(1 0 0);
+        --foreground: oklch(0.145 0 0);
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.145 0 0);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.145 0 0);
+        --primary: oklch(0.51 0.23 277);
+        --primary-foreground: oklch(0.96 0.02 272);
+        --secondary: oklch(0.967 0.001 286.375);
+        --muted: oklch(0.97 0 0);
+        --muted-foreground: oklch(0.556 0 0);
+        --accent: oklch(0.68 0.18 276);
+        --destructive: oklch(0.58 0.22 27);
+        --success: oklch(0.58 0.12 150);
+        --warning: oklch(0.7 0.13 78);
+        --info: oklch(0.58 0.12 205);
+        --border: oklch(0.922 0 0);
+        --input: oklch(0.922 0 0);
+        --ring: oklch(0.708 0 0);
+        --radius: 0.375rem;
+        --sidebar: oklch(0.985 0 0);
+        --sidebar-border: oklch(0.922 0 0);
+        --sidebar-accent: oklch(0.97 0 0);
+      }
+      html[data-theme="dark"] {
+        --background: #181818;
+        --foreground: #d4d4d4;
+        --card: #1f1f1f;
+        --card-foreground: #d4d4d4;
+        --popover: #222222;
+        --popover-foreground: #d4d4d4;
+        --primary: oklch(0.59 0.2 277);
+        --secondary: #2a2a2a;
+        --muted: #2a2a2a;
+        --muted-foreground: #888888;
+        --accent: oklch(0.62 0.18 276);
+        --destructive: oklch(0.704 0.191 22.216);
+        --success: oklch(0.68 0.12 150);
+        --warning: oklch(0.78 0.12 78);
+        --info: oklch(0.7 0.11 205);
+        --border: #2a2a2a;
+        --input: #2a2a2a;
+        --ring: #555555;
+        --sidebar: #1f1f1f;
+        --sidebar-border: #2a2a2a;
+        --sidebar-accent: #2a2a2a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+
+      /* ---- app shell mock ---- */
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      .app-main {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+      }
+      .sidebar {
+        width: 212px;
+        border-right: 1px solid var(--sidebar-border);
+        background: var(--sidebar);
+        padding: 14px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 15px;
+        padding: 4px 8px 14px;
+        letter-spacing: -0.01em;
+      }
+      .navitem {
+        font-size: 13px;
+        color: var(--muted-foreground);
+        padding: 7px 10px;
+        border-radius: 8px;
+      }
+      .navitem.active {
+        background: var(--sidebar-accent);
+        color: var(--foreground);
+        font-weight: 550;
+      }
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .topbar {
+        height: 46px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 18px;
+        background: var(--card);
+      }
+      .topbar-title {
+        font-weight: 650;
+        font-size: 14px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .canvas {
+        flex: 1;
+        padding: 22px;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        align-content: start;
+      }
+      .ghost-col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .ghost-head {
+        height: 14px;
+        width: 60%;
+        border-radius: 4px;
+        background: var(--muted);
+      }
+      .ghost-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--card);
+        height: 68px;
+        opacity: 0.55;
+      }
+      .statusbar {
+        height: 26px;
+        border-top: 1px solid var(--border);
+        background: var(--card);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        font-size: 12px;
+        color: var(--muted-foreground);
+      }
+      .sb-right {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 100%;
+      }
+
+      /* ---- modal ---- */
+      .scrim {
+        position: fixed;
+        inset: 0;
+        background: rgb(9 12 20 / 45%);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+      .dialog {
+        width: min(720px, 94vw);
+        max-height: 88vh;
+        background: var(--popover);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 24px 60px -12px rgb(0 0 0 / 40%);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .dialog-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+      }
+      .dialog-title {
+        font-weight: 650;
+        font-size: 14px;
+      }
+      .dialog-x {
+        border: none;
+        background: transparent;
+        color: var(--muted-foreground);
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .dialog-body {
+        padding: 16px 18px;
+        overflow: auto;
+      }
+
+      /* ---- settings page mock ---- */
+      .settings-page {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 28px 24px;
+      }
+      .settings-h1 {
+        font-size: 18px;
+        font-weight: 650;
+        margin: 0 0 4px;
+      }
+      .settings-sub {
+        color: var(--muted-foreground);
+        font-size: 13px;
+        margin: 0 0 20px;
+      }
+
+      /* ---- host.ui stubs (approximate shadcn) ---- */
+      .u-switch {
+        width: 34px;
+        height: 20px;
+        border-radius: 999px;
+        border: none;
+        background: var(--input);
+        position: relative;
+        cursor: pointer;
+        flex: none;
+      }
+      .u-switch[data-checked="true"] {
+        background: var(--primary);
+      }
+      .u-switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #fff;
+        transition: transform 0.15s ease;
+      }
+      .u-switch[data-checked="true"]::after {
+        transform: translateX(14px);
+      }
+      .u-label {
+        font-size: 13px;
+        font-weight: 500;
+      }
+    </style>
+    <link rel="stylesheet" href="../../ui/plugin.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="vendor/react.js"></script>
+    <script src="vendor/react-dom.js"></script>
+    <script src="demo.js"></script>
+  </body>
+</html>

@@ -1,0 +1,536 @@
+/* kandev-plugin-github-status — provider health, styled to sit beside CI
+ * Monitor without looking like a different product.
+ *
+ * Same design intent as CI Monitor: color is a signal, not a fill. Each
+ * severity exposes the same five tokens
+ *   --ghs-fg    accent text
+ *   --ghs-dot   status dot
+ *   --ghs-soft  faint pill fill
+ *   --ghs-bd    pill border
+ *   --ghs-rail  2px left rail on a row
+ * ...but every one of them is derived from a HOST theme token
+ * (--success / --warning / --destructive / --info / --muted-foreground) with
+ * color-mix, rather than hardcoded hex. That is the whole light/dark story:
+ * the host swaps the token, these derive again, and there is no second
+ * palette to keep in sync.
+ *
+ * Mixing against `transparent` (not --background) keeps the soft fills correct
+ * on any surface — status bar, top bar, modal, and toast all sit on different
+ * backgrounds.
+ */
+
+.ghs-ok {
+  --ghs-fg: color-mix(in oklab, var(--success) 82%, var(--foreground));
+  --ghs-dot: var(--success);
+  --ghs-soft: color-mix(in oklab, var(--success) 12%, transparent);
+  --ghs-bd: color-mix(in oklab, var(--success) 28%, var(--border));
+  --ghs-rail: color-mix(in oklab, var(--success) 55%, transparent);
+}
+.ghs-mnt {
+  --ghs-fg: color-mix(in oklab, var(--info) 82%, var(--foreground));
+  --ghs-dot: var(--info);
+  --ghs-soft: color-mix(in oklab, var(--info) 12%, transparent);
+  --ghs-bd: color-mix(in oklab, var(--info) 26%, var(--border));
+  --ghs-rail: color-mix(in oklab, var(--info) 50%, transparent);
+}
+.ghs-min {
+  --ghs-fg: color-mix(in oklab, var(--warning) 78%, var(--foreground));
+  --ghs-dot: var(--warning);
+  --ghs-soft: color-mix(in oklab, var(--warning) 14%, transparent);
+  --ghs-bd: color-mix(in oklab, var(--warning) 30%, var(--border));
+  --ghs-rail: color-mix(in oklab, var(--warning) 58%, transparent);
+}
+/* Partial outage sits between warning and destructive — a real problem, but
+ * visually distinguishable from "github.com is down". */
+.ghs-maj {
+  --ghs-fg: color-mix(in oklab, var(--destructive) 74%, var(--foreground));
+  --ghs-dot: color-mix(in oklab, var(--destructive) 82%, var(--warning));
+  --ghs-soft: color-mix(in oklab, var(--destructive) 13%, transparent);
+  --ghs-bd: color-mix(in oklab, var(--destructive) 30%, var(--border));
+  --ghs-rail: color-mix(in oklab, var(--destructive) 55%, transparent);
+}
+.ghs-crit {
+  --ghs-fg: color-mix(in oklab, var(--destructive) 88%, var(--foreground));
+  --ghs-dot: var(--destructive);
+  --ghs-soft: color-mix(in oklab, var(--destructive) 17%, transparent);
+  --ghs-bd: color-mix(in oklab, var(--destructive) 38%, var(--border));
+  --ghs-rail: color-mix(in oklab, var(--destructive) 68%, transparent);
+}
+
+.ghs-spacer {
+  flex: 1;
+}
+.ghs-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--ghs-dot, var(--muted-foreground));
+  flex: none;
+}
+
+/* ── shared status pill ──────────────────────────────────────────────────── */
+.ghs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  flex: none;
+  padding: 0.08rem 0.45rem;
+  border-radius: 6px;
+  background: var(--ghs-soft);
+  border: 1px solid var(--ghs-bd);
+  color: var(--ghs-fg);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.ghs-pill-sm {
+  font-size: 0.67rem;
+  padding: 0.05rem 0.4rem;
+}
+.ghs-pill .ghs-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+/* ── status-bar chip ─────────────────────────────────────────────────────── */
+/* Healthy: a small dot and muted text, visually recessed — it should read as
+ * furniture. Degraded: the pill takes the severity color and pulses once. */
+.ghs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0 0.35rem;
+  height: 100%;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.ghs-chip:hover {
+  color: var(--foreground);
+}
+.ghs-chip[data-loud="false"] .ghs-dot {
+  /* Recessed: the healthy dot is a hint, not a green light demanding
+   * attention. */
+  background: color-mix(in oklab, var(--ghs-dot) 55%, var(--muted-foreground));
+  opacity: 0.75;
+}
+.ghs-chip[data-loud="true"] {
+  background: var(--ghs-soft);
+  border-color: var(--ghs-bd);
+  color: var(--ghs-fg);
+  font-weight: 600;
+  padding: 0 0.45rem;
+}
+.ghs-chip[data-loud="true"] .ghs-dot {
+  animation: ghs-pulse 1.8s ease-in-out infinite;
+}
+.ghs-chip[data-stale="true"] .ghs-dot {
+  /* A stale reading is a hollow dot: we are showing you the last thing we
+   * know, not a live one. */
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ghs-dot, var(--muted-foreground));
+  animation: none;
+}
+.ghs-chip-stale {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+@keyframes ghs-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ── main-top-bar banner ─────────────────────────────────────────────────── */
+.ghs-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: min(38rem, 45vw);
+  padding: 0.18rem 0.55rem;
+  border-radius: 7px;
+  background: var(--ghs-soft);
+  border: 1px solid var(--ghs-bd);
+  color: var(--ghs-fg);
+  cursor: pointer;
+  font-size: 0.74rem;
+  text-align: left;
+}
+.ghs-banner:hover {
+  border-color: color-mix(in oklab, var(--ghs-bd) 60%, var(--foreground));
+}
+.ghs-banner-title {
+  font-weight: 650;
+  flex: none;
+}
+.ghs-banner-detail {
+  color: color-mix(in oklab, var(--ghs-fg) 70%, var(--muted-foreground));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── modal panel ─────────────────────────────────────────────────────────── */
+.ghs-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.ghs-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  background: var(--ghs-soft);
+  border: 1px solid var(--ghs-bd);
+}
+.ghs-hero-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: var(--ghs-dot);
+  flex: none;
+  box-shadow: 0 0 0 3px var(--ghs-soft);
+}
+.ghs-hero-text {
+  min-width: 0;
+}
+.ghs-hero-title {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--ghs-fg);
+}
+.ghs-hero-sub {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+.ghs-hero-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.ghs-stale {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.62rem;
+}
+.ghs-refresh {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 7px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+.ghs-refresh:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.ghs-notice {
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+}
+
+.ghs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ghs-h3 {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+/* component rows — same shape as CI Monitor's PR rows: neutral background,
+ * a colored rail and a colored pill. */
+.ghs-comps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.ghs-comp {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: inset 2px 0 0 var(--ghs-rail);
+  padding: 0.45rem 0.6rem 0.45rem 0.7rem;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.ghs-comp:hover {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+.ghs-comp-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.ghs-comp-name {
+  font-weight: 560;
+}
+.ghs-comp-desc {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* incidents */
+.ghs-incs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.ghs-inc {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: inset 2px 0 0 var(--ghs-rail);
+  padding: 0.55rem 0.7rem 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.ghs-inc-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.ghs-inc-title {
+  font-weight: 600;
+  color: var(--foreground);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+a.ghs-inc-title:hover {
+  text-decoration: underline;
+}
+.ghs-inc-when {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.ghs-inc-body {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  white-space: pre-line;
+  max-height: 8.5rem;
+  overflow-y: auto;
+}
+.ghs-inc-comps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+/* Affected-component tags inside an incident card. Named -tag, not -chip:
+ * .ghs-chip is the status-bar button, and sharing the name leaked this
+ * border onto it. */
+.ghs-tag {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0 0.32rem;
+  font-size: 0.66rem;
+  color: var(--muted-foreground);
+}
+
+.ghs-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+.ghs-foot-others {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ghs-foot-link {
+  color: var(--muted-foreground);
+  text-decoration: none;
+  flex: none;
+}
+.ghs-foot-link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+.ghs-empty,
+.ghs-error {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+.ghs-error {
+  color: var(--destructive);
+}
+
+/* ── transition toasts ───────────────────────────────────────────────────── */
+/* Fixed stack anchored bottom-right, above the status bar. Hosted by the chip
+ * so the plugin needs no extra mount point. */
+.ghs-toasts {
+  position: fixed;
+  right: 1rem;
+  bottom: 2.6rem;
+  z-index: 60;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+.ghs-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: 24rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  background: var(--popover, var(--card));
+  border: 1px solid var(--ghs-bd);
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 35%);
+  color: var(--foreground);
+  font-size: 0.78rem;
+  animation: ghs-toast-in 0.18s ease-out;
+}
+@keyframes ghs-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ghs-toast .ghs-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+}
+.ghs-toast-text {
+  min-width: 0;
+  flex: 1;
+}
+.ghs-toast-title {
+  font-weight: 650;
+  color: var(--ghs-fg);
+}
+.ghs-toast-detail {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ghs-toast-open {
+  flex: none;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.ghs-toast-open:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+.ghs-toast-x {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+.ghs-toast-x:hover {
+  color: var(--foreground);
+}
+
+/* ── plugin settings ─────────────────────────────────────────────────────── */
+.ghs-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+}
+.ghs-set-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+}
+.ghs-set-text {
+  min-width: 0;
+  max-width: 42rem;
+}
+.ghs-set-title {
+  font-weight: 600;
+}
+.ghs-set-desc {
+  margin: 0.2rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+.ghs-set-error {
+  color: var(--destructive);
+  font-size: 0.75rem;
+}

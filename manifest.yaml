@@ -1,0 +1,40 @@
+id: "kandev-plugin-github-status"
+api_version: 1
+version: "0.1.0"
+display_name: "GitHub Status"
+description: "Is it me or is it GitHub? A quiet status-bar chip that turns loud when Git Operations, Actions, or the API degrade — polled from githubstatus.com."
+author: "kandev"
+categories: ["tools"]
+repo_url: "https://github.com/kdlbs/kandev-plugin-github-status"
+
+runtime:
+  type: binary
+  executables:
+    linux-amd64: "server/plugin-linux-amd64"
+    linux-arm64: "server/plugin-linux-arm64"
+    darwin-amd64: "server/plugin-darwin-amd64"
+    darwin-arm64: "server/plugin-darwin-arm64"
+    windows-amd64: "server/plugin-windows-amd64.exe"
+
+# state: the poller persists its last-notified severity + the notification
+#   preference, so a plugin restart never replays a toast for a transition
+#   the user already saw.
+# No api_read/api_write/secrets: this plugin reads one public, unauthenticated
+# JSON endpoint and never touches kandev's own data.
+capabilities:
+  state: true
+
+webhooks:
+  - key: "status"
+    description: "Current provider-health snapshot as JSON (UI request relay, not an external webhook)"
+    method: "GET"
+  - key: "ack"
+    description: "Acknowledges a transition toast the UI has already shown, so a reload never replays it"
+    method: "POST"
+  - key: "settings"
+    description: "Reads/writes the plugin-settings toggles (transition notifications)"
+    method: "POST"
+
+ui:
+  bundle: "/ui/bundle.js"
+  styles: ["/ui/plugin.css"]
