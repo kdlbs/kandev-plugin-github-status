@@ -1,7 +1,7 @@
 .PHONY: build test fmt vet package package-host clean
 
 BIN := bin/kandev-plugin-github-status
-VERSION := 0.1.0
+VERSION := 0.1.2
 STAGE := .build/stage
 PKG_OUT := kandev-plugin-github-status-$(VERSION).tar.gz
 

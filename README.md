@@ -78,7 +78,9 @@ loud, never notified.
 
 More states in [`docs/`](docs/): `app-healthy`, `app-degraded`, `app-stale`,
 `modal-critical-dark`, `modal-incident-dark`, `settings`, and their dark
-counterparts.
+counterparts. `real-app-*.png` are the same surfaces captured from an actual
+running kandev instance with the plugin installed, rather than from the
+offline harness.
 
 ## Being a good network citizen
 
@@ -210,7 +212,7 @@ make package              # all five platforms in manifest.yaml
 ### Installing into a running instance
 
 ```bash
-curl -F "package=@kandev-plugin-github-status-0.1.0.tar.gz" \
+curl -F "package=@kandev-plugin-github-status-0.1.2.tar.gz" \
   http://localhost:38429/api/plugins/install
 ```
 
@@ -253,3 +255,11 @@ docs/harness/            offline render harness for screenshots
   vocabulary, same row/rail/pill shapes, adjacent question.
 - **No tooltips in the modal.** `host.ui` has no `TooltipProvider` inside modal
   content on this branch, so every label is rendered inline.
+- **The banner stays small on purpose.** The `main-top-bar` slot lives in the
+  host's actions row, which is `shrink-0` and overlays the centred task-search
+  input as it grows. A wide banner there does not get compressed — it covers
+  the search box. So the banner carries severity only, and the incident name
+  appears above 1700px or in the modal.
+- **The toast stack is bottom-left.** kandev's own toast container is a fixed
+  360px column at bottom-right; two stacks sharing that anchor overlap, so this
+  one takes the opposite corner at the same vertical offset.

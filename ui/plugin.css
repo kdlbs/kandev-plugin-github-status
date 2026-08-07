@@ -153,11 +153,22 @@
 }
 
 /* ── main-top-bar banner ─────────────────────────────────────────────────── */
+/* This slot is a flex item in the host's top-bar actions row
+ * (`relative z-10 ml-auto flex shrink-0 items-center gap-2`). That row does
+ * NOT shrink — it overlays the centred task-search input when it grows — so a
+ * wide banner here does not get compressed, it covers the search box. The
+ * banner therefore stays deliberately small: severity only, with the incident
+ * name reserved for very wide viewports and the modal.
+ *
+ * min-width:0 plus the ellipsised title below is the second half of that:
+ * whatever room it does get, it degrades inside instead of overflowing. */
 .ghs-banner {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  max-width: min(38rem, 45vw);
+  min-width: 0;
+  max-width: min(12rem, 15vw);
+  overflow: hidden;
   padding: 0.18rem 0.55rem;
   border-radius: 7px;
   background: var(--ghs-soft);
@@ -172,7 +183,11 @@
 }
 .ghs-banner-title {
   font-weight: 650;
-  flex: none;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .ghs-banner-detail {
   color: color-mix(in oklab, var(--ghs-fg) 70%, var(--muted-foreground));
@@ -180,6 +195,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+/* The incident name only appears when the top bar genuinely has the room for
+ * it. Everywhere else the banner is severity-only and the name lives one
+ * click away in the modal. */
+.ghs-banner-detail {
+  display: none;
+}
+@media (min-width: 1700px) {
+  .ghs-banner {
+    max-width: min(24rem, 20vw);
+  }
+  .ghs-banner-detail {
+    display: inline;
+  }
 }
 
 /* ── modal panel ─────────────────────────────────────────────────────────── */
@@ -418,12 +447,18 @@ a.ghs-inc-title:hover {
 }
 
 /* ── transition toasts ───────────────────────────────────────────────────── */
-/* Fixed stack anchored bottom-right, above the status bar. Hosted by the chip
- * so the plugin needs no extra mount point. */
+/* Hosted by the status-bar chip so the plugin needs no extra mount point.
+ *
+ * Anchored bottom-LEFT on purpose: kandev's own toast container is
+ * `fixed bottom-[calc(1rem+var(--app-status-bar-height))] right-4 z-[60]
+ * w-[360px]` (components/toast-provider.tsx). Two independent fixed stacks
+ * sharing that anchor overlap, so this one takes the opposite corner and
+ * matches the host's vertical offset so both clear the status bar
+ * identically. */
 .ghs-toasts {
   position: fixed;
-  right: 1rem;
-  bottom: 2.6rem;
+  left: 1rem;
+  bottom: calc(1rem + var(--app-status-bar-height, 1.5rem));
   z-index: 60;
   display: flex;
   flex-direction: column-reverse;
