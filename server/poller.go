@@ -22,7 +22,7 @@ const (
 	// userAgent identifies this plugin to the status page. Statuspage
 	// operators ask for an identifying UA; an anonymous poller is the one
 	// that gets rate-limited first.
-	userAgent = "kandev-plugin-github-status/0.1.4 (+https://github.com/kdlbs/kandev-plugin-github-status)"
+	userAgent = "kandev-plugin-github-status/0.1.0 (+https://github.com/kdlbs/kandev-plugin-github-status)"
 
 	// basePollInterval is the floor. githubstatus.com advertises
 	// max-age=10, which we deliberately do not take it up on — 60s is

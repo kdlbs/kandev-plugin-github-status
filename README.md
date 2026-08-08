@@ -220,7 +220,7 @@ to the GitHub Release.
 ### Installing into a running instance
 
 ```bash
-curl -F "package=@kandev-plugin-github-status-0.1.4.tar.gz" \
+curl -F "package=@kandev-plugin-github-status-0.1.0.tar.gz" \
   http://localhost:38429/api/plugins/install
 ```
 
