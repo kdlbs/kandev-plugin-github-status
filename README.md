@@ -209,10 +209,18 @@ make package-host         # host platform only, fast local loop
 make package              # all five platforms in manifest.yaml
 ```
 
+CI (`.github/workflows/ci.yml`) runs tidy + gofmt + vet + test on every PR,
+and `build.yml` packages all five platforms. Both check out `kdlbs/kandev`
+as a sibling so the `replace` in `go.mod` resolves. `release.yml` is manual
+(`workflow_dispatch` with a patch/minor/major bump, or a `v*` tag push): it
+syncs `manifest.yaml`/`Makefile`/README, writes `CHANGELOG.md`, tags, then
+publishes `kandev-plugin-github-status-<version>.tar.gz` plus `checksums.txt`
+to the GitHub Release.
+
 ### Installing into a running instance
 
 ```bash
-curl -F "package=@kandev-plugin-github-status-0.1.3.tar.gz" \
+curl -F "package=@kandev-plugin-github-status-0.1.4.tar.gz" \
   http://localhost:38429/api/plugins/install
 ```
 
@@ -266,3 +274,9 @@ docs/harness/            offline render harness for screenshots
 - **The toast stack is bottom-left.** kandev's own toast container is a fixed
   360px column at bottom-right; two stacks sharing that anchor overlap, so this
   one takes the opposite corner at the same vertical offset.
+- **Line heights are set, not inherited.** The toast stack is rendered by the
+  status-bar chip, so it lives inside kandev's `leading-none` status bar. An
+  inherited `line-height: 1` makes the line box shorter than the glyph box,
+  and combined with the ellipsis `overflow: hidden` that shears the descenders
+  off text like "Widespread outage affecting github.com". Anything this plugin
+  renders into host chrome sets its own `line-height`.

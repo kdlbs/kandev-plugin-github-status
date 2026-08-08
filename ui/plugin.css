@@ -100,6 +100,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  /* The status bar is `leading-none`; give the label room for its own
+   * descenders rather than inheriting a line box shorter than the glyphs. */
+  line-height: 1.4;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -481,6 +484,12 @@ a.ghs-inc-title:hover {
   box-shadow: 0 8px 24px -8px rgb(0 0 0 / 35%);
   color: var(--foreground);
   font-size: 0.78rem;
+  /* Explicit, not inherited. The stack is rendered by the status-bar chip,
+   * so it sits inside kandev's `leading-none` status bar and would otherwise
+   * inherit line-height:1 — a line box shorter than the glyph box. Combined
+   * with the ellipsis overflow:hidden below, that shears the descenders off
+   * "Widespread outage affecting github.com". */
+  line-height: 1.35;
   animation: ghs-toast-in 0.18s ease-out;
 }
 @keyframes ghs-toast-in {
@@ -504,10 +513,12 @@ a.ghs-inc-title:hover {
 .ghs-toast-title {
   font-weight: 650;
   color: var(--ghs-fg);
+  line-height: 1.3;
 }
 .ghs-toast-detail {
   color: var(--muted-foreground);
   font-size: 0.72rem;
+  line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
