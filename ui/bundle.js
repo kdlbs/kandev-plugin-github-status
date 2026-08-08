@@ -588,6 +588,26 @@
     // ── main top bar banner ────────────────────────────────────────────────
     // Renders nothing at all while GitHub is healthy. That silence is the
     // feature: this slot is only worth its pixels during an incident.
+    //
+    // When it does render it is a 32x32 icon button, the same footprint as
+    // every other control in the host's top-bar actions row. A labelled pill
+    // here is ~190px in a row that is otherwise all icons — it crowds the
+    // bar and covers the task search. The severity colour on a GitHub mark
+    // carries the signal; the words live in the chip, the hover title, and
+    // the modal.
+    function GitHubMark() {
+      // GitHub's Invertocat, inlined so the button needs no asset request and
+      // inherits currentColor from the severity token.
+      return h(
+        "svg",
+        { className: "ghs-mark", viewBox: "0 0 16 16", "aria-hidden": "true", focusable: "false" },
+        h("path", {
+          fill: "currentColor",
+          d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z",
+        }),
+      );
+    }
+
     function StatusBanner() {
       const { payload } = useStatus();
       if (!payload || !payload.loud) return null;
@@ -599,19 +619,23 @@
         .filter((c) => c.severity !== "operational")
         .map((c) => c.name);
       const detail = incident ? incident.name : affected.join(", ");
+      const label = `GitHub — ${meta.headline}${detail ? ` · ${detail}` : ""}${payload.stale ? " (stale)" : ""}`;
 
       return h(
         "button",
         {
           type: "button",
           className: `ghs-banner ${meta.cls}`,
+          "data-stale": String(Boolean(payload.stale)),
           onClick: () => openStatusModal(),
-          "aria-label": `GitHub status: ${meta.headline}. Open details.`,
+          // A native title, not host.ui Tooltip — this is top-bar chrome, and
+          // the host's TooltipProvider is not something a plugin slot can
+          // count on.
+          title: label,
+          "aria-label": `${label}. Open details.`,
         },
-        h("span", { className: "ghs-dot" }),
-        h("span", { className: "ghs-banner-title" }, `GitHub — ${meta.headline}`),
-        detail ? h("span", { className: "ghs-banner-detail" }, detail) : null,
-        payload.stale ? h("span", { className: "ghs-chip-stale" }, "stale") : null,
+        h(GitHubMark),
+        h("span", { className: "ghs-banner-pip" }),
       );
     }
 

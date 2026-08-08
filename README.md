@@ -60,7 +60,7 @@ loud, never notified.
 | Slot | When | What |
 | --- | --- | --- |
 | `app-status-bar-right` | always | Dot + "GitHub", muted while healthy; a severity-colored pill when not. Click to open the modal. |
-| `main-top-bar` | only when degraded | A banner on Home / Kanban / Tasks naming the incident. Renders nothing at all while healthy. |
+| `main-top-bar` | only when degraded | A severity-tinted GitHub mark with a pulsing pip on Home / Kanban / Tasks — one 32×32 icon button, the same footprint as its neighbours. Renders nothing at all while healthy. |
 | modal | on click | Overall status, the six key components, active incidents (impact, status, latest update, timestamp), upcoming maintenance, and a link out. |
 | toast | only on a transition | "GitHub is degraded" / "GitHub is back to normal", once per change. |
 | `plugin-settings` | Settings → Plugins | The notification toggle. |
@@ -212,7 +212,7 @@ make package              # all five platforms in manifest.yaml
 ### Installing into a running instance
 
 ```bash
-curl -F "package=@kandev-plugin-github-status-0.1.2.tar.gz" \
+curl -F "package=@kandev-plugin-github-status-0.1.3.tar.gz" \
   http://localhost:38429/api/plugins/install
 ```
 
@@ -255,11 +255,14 @@ docs/harness/            offline render harness for screenshots
   vocabulary, same row/rail/pill shapes, adjacent question.
 - **No tooltips in the modal.** `host.ui` has no `TooltipProvider` inside modal
   content on this branch, so every label is rendered inline.
-- **The banner stays small on purpose.** The `main-top-bar` slot lives in the
-  host's actions row, which is `shrink-0` and overlays the centred task-search
-  input as it grows. A wide banner there does not get compressed — it covers
-  the search box. So the banner carries severity only, and the incident name
-  appears above 1700px or in the modal.
+- **The top-bar indicator is an icon button, not a banner.** The
+  `main-top-bar` slot lives in the host's actions row — `shrink-0`, otherwise
+  a run of 32×32 icon buttons, and it overlays the centred task-search input
+  as it grows. A labelled pill there was ~190px: it crowded the bar and
+  covered the search box. It is now one more 32×32 button, so the row grows
+  176px → 216px instead of 176px → 536px. It is unmissable by being the only
+  coloured, pulsing thing among monochrome icons rather than by being large;
+  the words live in the status-bar chip, the hover title, and the modal.
 - **The toast stack is bottom-left.** kandev's own toast container is a fixed
   360px column at bottom-right; two stacks sharing that anchor overlap, so this
   one takes the opposite corner at the same vertical offset.

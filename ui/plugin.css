@@ -154,60 +154,63 @@
 
 /* ── main-top-bar banner ─────────────────────────────────────────────────── */
 /* This slot is a flex item in the host's top-bar actions row
- * (`relative z-10 ml-auto flex shrink-0 items-center gap-2`). That row does
- * NOT shrink — it overlays the centred task-search input when it grows — so a
- * wide banner here does not get compressed, it covers the search box. The
- * banner therefore stays deliberately small: severity only, with the incident
- * name reserved for very wide viewports and the modal.
+ * (`relative z-10 ml-auto flex shrink-0 items-center gap-2`), which is
+ * otherwise a run of 32x32 icon buttons. That row does NOT shrink — it
+ * overlays the centred task-search input as it grows — so anything wide here
+ * both crowds the bar and covers the search box.
  *
- * min-width:0 plus the ellipsised title below is the second half of that:
- * whatever room it does get, it degrades inside instead of overflowing. */
+ * So the banner is one more 32x32 icon button. It is unmissable by being the
+ * only coloured, pulsing thing in a row of monochrome icons, not by being
+ * large. The words are in the status-bar chip, the hover title, and the
+ * modal. */
 .ghs-banner {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  min-width: 0;
-  max-width: min(12rem, 15vw);
-  overflow: hidden;
-  padding: 0.18rem 0.55rem;
-  border-radius: 7px;
+  justify-content: center;
+  position: relative;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 8px;
   background: var(--ghs-soft);
   border: 1px solid var(--ghs-bd);
   color: var(--ghs-fg);
   cursor: pointer;
-  font-size: 0.74rem;
-  text-align: left;
 }
 .ghs-banner:hover {
+  background: color-mix(in oklab, var(--ghs-soft) 60%, var(--muted));
   border-color: color-mix(in oklab, var(--ghs-bd) 60%, var(--foreground));
 }
-.ghs-banner-title {
-  font-weight: 650;
-  flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
+.ghs-mark {
+  width: 1rem;
+  height: 1rem;
+  display: block;
 }
-.ghs-banner-detail {
-  color: color-mix(in oklab, var(--ghs-fg) 70%, var(--muted-foreground));
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
+
+/* The pip is the "look at me": a small severity dot notched into the corner
+ * of the mark, pulsing so it reads as live rather than decorative. */
+.ghs-banner-pip {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--ghs-dot);
+  box-shadow: 0 0 0 2px var(--background);
+  animation: ghs-pulse 1.8s ease-in-out infinite;
 }
-/* The incident name only appears when the top bar genuinely has the room for
- * it. Everywhere else the banner is severity-only and the name lives one
- * click away in the modal. */
-.ghs-banner-detail {
-  display: none;
+.ghs-banner[data-stale="true"] .ghs-banner-pip {
+  background: transparent;
+  box-shadow:
+    0 0 0 2px var(--background),
+    inset 0 0 0 1.5px var(--ghs-dot);
+  animation: none;
 }
-@media (min-width: 1700px) {
-  .ghs-banner {
-    max-width: min(24rem, 20vw);
-  }
-  .ghs-banner-detail {
-    display: inline;
+@media (prefers-reduced-motion: reduce) {
+  .ghs-banner-pip {
+    animation: none;
   }
 }
 
