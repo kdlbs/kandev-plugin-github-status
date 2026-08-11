@@ -61,6 +61,7 @@ loud, never notified.
 | --- | --- | --- |
 | `app-status-bar-right` | always | Dot + "GitHub", muted while healthy; a severity-colored pill when not. Click to open the modal. |
 | `main-top-bar` | only when degraded | A severity-tinted GitHub mark with a pulsing pip on Home / Kanban / Tasks — one 32×32 icon button, the same footprint as its neighbours. Renders nothing at all while healthy. |
+| `chat-top-bar` | only when degraded | The same incident indicator in the top bar of an open task. |
 | modal | on click | Overall status, the six key components, active incidents (impact, status, latest update, timestamp), upcoming maintenance, and a link out. |
 | toast | only on a transition | "GitHub is degraded" / "GitHub is back to normal", once per change. |
 | `plugin-settings` | Settings → Plugins | The notification toggle. |

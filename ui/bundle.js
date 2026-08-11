@@ -4,7 +4,8 @@
 //   • app-status-bar-right — always. A recessed dot + "GitHub" while all is
 //     well; a colored pill the moment a component kandev depends on degrades.
 //   • main-top-bar        — only during a degradation, so Home/Kanban/Tasks
-//     carry an unmissable banner.
+//     carry an unmissable indicator.
+//   • chat-top-bar        — the same incident indicator on an open task.
 //   • click either        — a modal with the six components that matter, the
 //     unresolved incident, and upcoming maintenance.
 //   • toast               — only on a transition, acknowledged by id so a
@@ -711,6 +712,7 @@
 
       registry.registerComponent("app-status-bar-right", ui.StatusChip);
       registry.registerComponent("main-top-bar", ui.StatusBanner);
+      registry.registerComponent("chat-top-bar", ui.StatusBanner);
       registry.registerComponent("plugin-settings", ui.SettingsPanel);
     },
     destroy() {
