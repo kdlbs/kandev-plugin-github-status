@@ -1,6 +1,6 @@
 id: "kandev-plugin-github-status"
 api_version: 1
-version: "0.1.0"
+version: "0.1.1"
 display_name: "GitHub Status"
 description: "Is it me or is it GitHub? A quiet status-bar chip that turns loud when Git Operations, Actions, or the API degrade — polled from githubstatus.com."
 author: "kandev"

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1] - 2026-08-11
+
+### Changed
+
+- fix(ui): show status in task top bar (52071dd)
+
+
 ## [0.1.0] - 2026-08-08
 
 Initial release.
