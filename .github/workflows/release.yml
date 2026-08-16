@@ -182,7 +182,7 @@ jobs:
 
       - name: Package all platforms
         working-directory: plugin
-        run: make package
+        run: make package verify-package
 
       - name: Extract checksums
         working-directory: plugin

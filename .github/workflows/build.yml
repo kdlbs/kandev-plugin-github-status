@@ -40,4 +40,4 @@ jobs:
 
       - name: Package all supported platforms
         working-directory: plugin
-        run: make package
+        run: make package verify-package
