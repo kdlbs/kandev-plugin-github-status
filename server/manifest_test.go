@@ -1,12 +1,16 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/xml"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+const approvedMarketplaceIconSHA256 = "500cc7f291e1e2dd734539a44f70259f809f18dbcab6e4d208012725967c6878"
 
 func TestManifestIncludesPackagedMarketplaceIcon(t *testing.T) {
 	contents, err := os.ReadFile("../manifest.yaml")
@@ -37,6 +41,9 @@ func manifestIconPath(manifest string) string {
 
 func assertMarketplaceSVG(t *testing.T, icon []byte) {
 	t.Helper()
+	if got := fmt.Sprintf("%x", sha256.Sum256(icon)); got != approvedMarketplaceIconSHA256 {
+		t.Fatalf("marketplace SVG sha256 = %q, want approved GitHub asset %q", got, approvedMarketplaceIconSHA256)
+	}
 
 	var root struct {
 		XMLName xml.Name
