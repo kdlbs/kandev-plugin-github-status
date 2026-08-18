@@ -203,15 +203,15 @@ Built against a sibling checkout of the kandev monorepo — `go.mod` has
 expects `../kandev` next to it.
 
 ```bash
-go test ./server/...      # 59 test functions, 79 runs incl. subtests
+go test ./server/...      # 60 test functions, 80 runs incl. subtests
 go vet ./server/...
 gofmt -l .
-make package-host         # host platform only, fast local loop
-make package              # all five platforms in manifest.yaml
+make package-host verify-package-host  # host platform only, fast local loop
+make package verify-package            # all five manifest platforms
 ```
 
 CI (`.github/workflows/ci.yml`) runs tidy + gofmt + vet + test on every PR,
-and `build.yml` packages all five platforms. Both check out `kdlbs/kandev`
+and `build.yml` packages and verifies all five platforms. Both check out `kdlbs/kandev`
 as a sibling so the `replace` in `go.mod` resolves. `release.yml` is manual
 (`workflow_dispatch` with a patch/minor/major bump, or a `v*` tag push): it
 syncs `manifest.yaml`/`Makefile`/README, writes `CHANGELOG.md`, tags, then

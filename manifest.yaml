@@ -6,6 +6,7 @@ description: "Is it me or is it GitHub? A quiet status-bar chip that turns loud 
 author: "kandev"
 categories: ["tools"]
 repo_url: "https://github.com/kdlbs/kandev-plugin-github-status"
+icon: "assets/icon.svg"
 
 runtime:
   type: binary
