@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.2] - 2026-08-21
+
+### Changed
+
+- fix: use official marketplace icon (ba4fcf4)
+- fix: make package verification fail closed (6ab33a9)
+- feat: add marketplace icon (c321fd8)
+
+
 ## [0.1.1] - 2026-08-11
 
 ### Changed
