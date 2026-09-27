@@ -6,9 +6,9 @@ When a push fails, a clone hangs, or CI never reports, that is the first
 question. This plugin answers it from the kandev status bar, without leaving
 the app.
 
-It is **quiet when healthy and loud when not**: a recessed dot and the word
-"GitHub" while everything works, a colored pill plus an unmissable top-bar
-banner the moment something kandev actually depends on degrades.
+It is **quiet when healthy and loud when not**: a standard status action stays
+in the app bar, and a contextual action appears in the main and task topbars
+when a service kandev depends on degrades.
 
 ![Degraded — banner, chip, and toast](docs/toast-degraded-dark.png)
 
@@ -59,12 +59,16 @@ loud, never notified.
 
 | Slot | When | What |
 | --- | --- | --- |
-| `app-status-bar-right` | always | Dot + "GitHub", muted while healthy; a severity-colored pill when not. Click to open the modal. |
-| `main-top-bar` | only when degraded | A severity-tinted GitHub mark with a pulsing pip on Home / Kanban / Tasks — one 32×32 icon button, the same footprint as its neighbours. Renders nothing at all while healthy. |
-| `chat-top-bar` | only when degraded | The same incident indicator in the top bar of an open task. |
+| `app-status-bar-right` | always | A localized GitHub action with a status label, semantic severity tone, and stale badge when needed. Click to open the modal. |
+| `main-top-bar` | only when degraded | A localized, severity-toned GitHub action on Home / Kanban / Tasks. Healthy status renders nothing. |
+| `chat-top-bar` | only when degraded | The same action in the topbar of an open task. |
 | modal | on click | Overall status, the six key components, active incidents (impact, status, latest update, timestamp), upcoming maintenance, and a link out. |
 | toast | only on a transition | "GitHub is degraded" / "GitHub is back to normal", once per change. |
 | `plugin-settings` | Settings → Plugins | The notification toggle. |
+
+Hosts that export `host.ui.Action` render the shared responsive action control.
+Older supported hosts select the existing Button fallback through the same
+registrations. The plugin does not declare a new minimum host version.
 
 <table>
 <tr>
@@ -198,25 +202,35 @@ the per-source notification baseline.
 
 ## Development
 
-Built against a sibling checkout of the kandev monorepo — `go.mod` has
-`replace github.com/kandev/kandev => ../kandev/apps/backend`, so this repo
-expects `../kandev` next to it.
+The Go backend SDK comes from a sibling Kandev checkout. The
+`.kandev-sdk-ref` file pins the checkout to host commit
+`570600439036e81f8e9e1c63f15c4abce8a6c846`, which includes the additive
+Action API. The Go module replacement expects the backend at
+`../kandev/apps/backend`.
 
 ```bash
-go test ./server/...      # 60 test functions, 80 runs incl. subtests
-go vet ./server/...
-gofmt -l .
-make package-host verify-package-host  # host platform only, fast local loop
-make package verify-package            # all five manifest platforms
+git clone https://github.com/kdlbs/kandev.git ../kandev
+git -C ../kandev checkout --detach "$(cat .kandev-sdk-ref)"
+node --version             # use Node 24 for the UI tests
+go mod tidy
+make check-format
+make vet
+make test
+make verify-package-host   # current host platform
+make verify-package        # all five declared platforms
 ```
 
-CI (`.github/workflows/ci.yml`) runs tidy + gofmt + vet + test on every PR,
-and `build.yml` packages and verifies all five platforms. Both check out `kdlbs/kandev`
-as a sibling so the `replace` in `go.mod` resolves. `release.yml` is manual
-(`workflow_dispatch` with a patch/minor/major bump, or a `v*` tag push): it
-syncs `manifest.yaml`/`Makefile`/README, writes `CHANGELOG.md`, tags, then
-publishes `kandev-plugin-github-status-<version>.tar.gz` plus `checksums.txt`
-to the GitHub Release.
+The test target runs the Go tests, fixture-based UI Action tests, and negative
+tests for package and release verification. Package verification checks the
+manifest, exact UI and asset inventory, declared platform binaries, and every
+SHA-256 entry. The host-only target is the faster local packaging loop.
+
+CI (`.github/workflows/ci.yml`) checks the pinned SDK, module tidiness,
+formatting, vet, and tests. `build.yml` packages and verifies all five
+platforms. `release.yml` accepts a manual patch/minor/major bump or a
+`v*` tag push. Both paths verify that the tag, manifest, Makefile, and package
+versions match, then publish
+`kandev-plugin-github-status-<version>.tar.gz` plus `checksums.txt`.
 
 ### Installing into a running instance
 
@@ -248,30 +262,25 @@ server/
   demo.go                fixture serving for ?demo=
   fixtures/              five summary.json payloads
 ui/
-  bundle.js              chip, banner, modal, toast, settings panel
-  plugin.css             severity tokens derived from host theme tokens
+  bundle.js              status actions, modal, toast, settings panel
+  plugin.css             legacy controls and status-mark animation
 docs/harness/            offline render harness for screenshots
 ```
 
 ## Design notes
 
-- **Colors are derived, never hardcoded.** Every severity token is a
-  `color-mix()` over kandev's own `--success` / `--warning` / `--destructive` /
-  `--info` / `--border`. There is no second palette to keep in sync with the
-  host, and dark mode is free.
+- **Colors follow the host action contract.** New hosts receive a semantic
+  `tone`; the legacy Button fallback derives its colors from Kandev theme
+  tokens. The plugin does not copy the host action's outer dimensions or
+  spacing.
 - **Sits next to CI Monitor, does not overlap it.** CI Monitor answers "did *my*
   PR's checks pass". This answers "is the provider up". Same pastel pill
   vocabulary, same row/rail/pill shapes, adjacent question.
 - **No tooltips in the modal.** `host.ui` has no `TooltipProvider` inside modal
   content on this branch, so every label is rendered inline.
-- **The top-bar indicator is an icon button, not a banner.** The
-  `main-top-bar` slot lives in the host's actions row — `shrink-0`, otherwise
-  a run of 32×32 icon buttons, and it overlays the centred task-search input
-  as it grows. A labelled pill there was ~190px: it crowded the bar and
-  covered the search box. It is now one more 32×32 button, so the row grows
-  176px → 216px instead of 176px → 536px. It is unmissable by being the only
-  coloured, pulsing thing among monochrome icons rather than by being large;
-  the words live in the status-bar chip, the hover title, and the modal.
+- **The topbar action follows host sizing.** Its stable accessible label and
+  localized status text stay available when the host truncates the visible
+  value. The tooltip and existing modal expose incident names and stale data.
 - **The toast stack is bottom-left.** kandev's own toast container is a fixed
   360px column at bottom-right; two stacks sharing that anchor overlap, so this
   one takes the opposite corner at the same vertical offset.
