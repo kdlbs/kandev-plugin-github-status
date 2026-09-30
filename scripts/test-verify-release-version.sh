@@ -52,7 +52,7 @@ mkdir -p "$test_dir/wrong-package/archive"
 sed "s/^version: \"$base_version\"$/version: \"$wrong_version\"/" \
 	"$test_dir/wrong-package/manifest.yaml" \
 	> "$test_dir/wrong-package/archive/manifest.yaml"
-package_file=$(cd "$test_dir/wrong-package" && make -s package-file)
+package_file=$(cd "$test_dir/wrong-package" && make --no-print-directory -s package-file)
 tar -czf "$test_dir/wrong-package/$package_file" \
 	-C "$test_dir/wrong-package/archive" manifest.yaml
 expect_failure 'a package manifest that differs from its tag' \
@@ -62,7 +62,7 @@ make_fixture matching-package
 mkdir -p "$test_dir/matching-package/archive"
 cp "$test_dir/matching-package/manifest.yaml" \
 	"$test_dir/matching-package/archive/manifest.yaml"
-package_file=$(cd "$test_dir/matching-package" && make -s package-file)
+package_file=$(cd "$test_dir/matching-package" && make --no-print-directory -s package-file)
 tar -czf "$test_dir/matching-package/$package_file" \
 	-C "$test_dir/matching-package/archive" manifest.yaml
 (cd "$test_dir/matching-package" &&
