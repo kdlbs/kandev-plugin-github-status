@@ -83,7 +83,7 @@ expected_files=$(printf '%s\n' \
 	ui/plugin.css \
 	checksums.txt \
 	$executable_paths | LC_ALL=C sort)
-actual_files=$(cd "$package_dir" && find . -type f -print |
+actual_files=$(cd "$package_dir" && find . ! -type d -print |
 	sed 's#^\./##' | LC_ALL=C sort)
 [ "$actual_files" = "$expected_files" ] || {
 	printf 'unexpected package file inventory\nexpected:\n%s\nfound:\n%s\n' \

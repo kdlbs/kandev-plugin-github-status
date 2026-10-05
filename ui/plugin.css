@@ -227,6 +227,7 @@
 }
 .ghs-action-indicator-stale {
   fill: var(--background);
+  stroke: currentColor;
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {

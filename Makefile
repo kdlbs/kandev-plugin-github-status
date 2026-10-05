@@ -1,4 +1,4 @@
-.PHONY: build test test-backend test-ui test-package-verifier test-release-version \
+.PHONY: build test test-backend test-ui test-package-verifier test-release-version test-format-verifier \
 	check-format fmt vet package package-host package-file verify-package \
 	verify-package-host clean
 
@@ -12,7 +12,7 @@ build:
 	mkdir -p bin
 	go build -o $(BIN) ./server/...
 
-test: test-backend test-ui test-package-verifier test-release-version
+test: test-backend test-ui test-package-verifier test-release-version test-format-verifier
 
 test-backend:
 	go test ./server/...
@@ -26,8 +26,12 @@ test-package-verifier:
 test-release-version:
 	sh scripts/test-verify-release-version.sh
 
+test-format-verifier:
+	sh scripts/test-check-format.sh
+
 check-format:
-	@test -z "$$(gofmt -l .)" || { echo "gofmt needed:"; gofmt -l .; exit 1; }
+	@files="$$(gofmt -l .)" || exit $$?; \
+	test -z "$$files" || { echo "gofmt needed:"; printf '%s\n' "$$files"; exit 1; }
 
 fmt:
 	gofmt -l .

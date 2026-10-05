@@ -124,6 +124,10 @@ ln -s ui/bundle.js "$test_dir/unexpected-symlink/extra.js"
 write_checksums "$test_dir/unexpected-symlink"
 expect_failure 'an unexpected symlink' "$test_dir/unexpected-symlink"
 
+copy_fixture unexpected-fifo
+mkfifo "$test_dir/unexpected-fifo/extra.pipe"
+expect_failure 'an unexpected FIFO' "$test_dir/unexpected-fifo"
+
 copy_fixture wrong-icon
 sed 's#icon: "assets/icon.svg"#icon: "assets/other.svg"#' \
 	"$test_dir/wrong-icon/manifest.yaml" > "$test_dir/wrong-icon/manifest.next"

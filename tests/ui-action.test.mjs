@@ -14,6 +14,7 @@ function element(type, props, ...children) {
 
 function createReact() {
   let active = null;
+  const componentRecords = new WeakMap();
 
   function hook(kind, initialValue) {
     const index = active.cursor++;
@@ -51,26 +52,48 @@ function createReact() {
       const changed =
         !slot.initialized ||
         dependencies === undefined ||
+        dependencies.length !== slot.dependencies.length ||
         dependencies.some((value, index) => !Object.is(value, slot.dependencies[index]));
       if (changed) {
-        if (typeof slot.cleanup === "function") slot.cleanup();
+        const previousCleanup = slot.cleanup;
         slot.dependencies = dependencies;
         slot.initialized = true;
         active.pending.push(() => {
+          if (typeof previousCleanup === "function") previousCleanup();
           slot.cleanup = effect();
         });
       }
     },
-    useCallback(callback) {
+    useCallback(callback, dependencies) {
       const slot = hook("callback", callback);
+      const changed =
+        !slot.initialized ||
+        dependencies === undefined ||
+        dependencies.length !== slot.dependencies.length ||
+        dependencies.some((value, index) => !Object.is(value, slot.dependencies[index]));
+      if (changed) {
+        slot.value = callback;
+        slot.dependencies = dependencies;
+        slot.initialized = true;
+      }
       return slot.value;
     },
     render(component, props = {}) {
       const previous = active;
-      active = { hooks: [], cursor: 0, pending: [] };
-      const record = active;
-      const tree = component(props);
-      active = previous;
+      let record = componentRecords.get(component);
+      if (!record) {
+        record = { hooks: [], cursor: 0, pending: [] };
+        componentRecords.set(component, record);
+      }
+      record.cursor = 0;
+      record.pending = [];
+      active = record;
+      let tree;
+      try {
+        tree = component(props);
+      } finally {
+        active = previous;
+      }
       for (const commit of record.pending) commit();
       return tree;
     },
@@ -259,6 +282,48 @@ test("uses plugin translations and values interpolation for the complete action 
   assert.match(action.props.tooltip, /^Interrupção grave/);
   assert.match(action.props.tooltip, /Widespread outage affecting github\.com/);
   assert.match(action.props.tooltip, /Abrir detalhes do estado do GitHub/);
+});
+
+test("interpolates the complete status tooltip when Action exists without host translations", async () => {
+  const harness = createPluginHarness({ state: "critical" });
+  harness.host.i18n = undefined;
+  const chip = findRegistration(harness.registrations, "app-status-bar-right");
+  const action = walk(
+    await renderWithStatus(harness, chip),
+    (node) => node.type === harness.Action,
+  )[0];
+
+  assert.equal(
+    action.props.tooltip,
+    "Major outage — Widespread outage affecting github.com. Open GitHub status details.",
+  );
+  assert.doesNotMatch(action.props.tooltip, /\{\{[^}]+\}\}/);
+});
+
+test("the UI hook harness preserves state, refs, and effect cleanup across rerenders", () => {
+  const React = createReact();
+  let initializations = 0;
+  const effects = [];
+  function Component({ dependency }) {
+    const [value, setValue] = React.useState(() => ++initializations);
+    const ref = React.useRef({ id: Symbol("stable") });
+    React.useEffect(() => {
+      effects.push(`effect:${dependency}`);
+      return () => effects.push(`cleanup:${dependency}`);
+    }, [dependency]);
+    return { value, setValue, ref: ref.current };
+  }
+
+  const first = React.render(Component, { dependency: 1 });
+  first.setValue((value) => value + 1);
+  const second = React.render(Component, { dependency: 1 });
+  assert.equal(initializations, 1);
+  assert.equal(second.value, 2);
+  assert.strictEqual(second.ref, first.ref);
+  assert.deepEqual(effects, ["effect:1"]);
+
+  React.render(Component, { dependency: 2 });
+  assert.deepEqual(effects, ["effect:1", "cleanup:1", "effect:2"]);
 });
 
 test("selects exactly one legacy Button on a host without Action or plugin translations", async () => {

@@ -114,7 +114,11 @@
     const translation =
       typeof useTranslation === "function" ? useTranslation() : null;
     return (key, fallback, values) => {
-      if (!translation || typeof translation.t !== "function") return fallback;
+      if (!translation || typeof translation.t !== "function") {
+        return fallback.replace(/\{\{([^}]+)\}\}/g, (placeholder, name) =>
+          values && Object.hasOwn(values, name) ? String(values[name]) : placeholder,
+        );
+      }
       return translation.t(key, { defaultValue: fallback, values });
     };
   }

@@ -11,12 +11,12 @@ if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
 fi
 
 tag=$1
-if ! printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+if ! printf '%s\n' "$tag" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'; then
 	fail "tag is not a release version: $tag"
 fi
 tag_version=${tag#v}
-manifest_version=$(sed -nE 's/^version: "([0-9]+\.[0-9]+\.[0-9]+)"$/\1/p' manifest.yaml)
-make_version=$(sed -nE 's/^VERSION := ([0-9]+\.[0-9]+\.[0-9]+)$/\1/p' Makefile)
+manifest_version=$(sed -nE 's/^version: "((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))"$/\1/p' manifest.yaml)
+make_version=$(sed -nE 's/^VERSION := ((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))$/\1/p' Makefile)
 [ -n "$manifest_version" ] || fail 'manifest.yaml has no SemVer version'
 [ -n "$make_version" ] || fail 'Makefile has no SemVer VERSION'
 [ "$manifest_version" = "$make_version" ] || \
@@ -32,7 +32,7 @@ if [ "$#" -eq 2 ]; then
 		fail "package filename $(basename "$package_file") differs from $expected_package"
 	package_manifest_contents=$(tar -xOzf "$package_file" manifest.yaml)
 	package_manifest=$(printf '%s\n' "$package_manifest_contents" |
-		sed -nE 's/^version: "([0-9]+\.[0-9]+\.[0-9]+)"$/\1/p')
+		sed -nE 's/^version: "((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))"$/\1/p')
 	[ "$package_manifest" = "$tag_version" ] || \
 		fail "package manifest version ${package_manifest:-missing} differs from tag $tag"
 fi
