@@ -163,6 +163,11 @@
   height: 1rem;
   display: block;
 }
+.ghs-mark-stale-indicator {
+  fill: var(--background);
+  stroke: currentColor;
+  stroke-width: 1.5px;
+}
 
 /* The pip is the "look at me": a small severity dot notched into the corner
  * of the mark, pulsing so it reads as live rather than decorative. */

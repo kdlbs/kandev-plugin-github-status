@@ -339,7 +339,7 @@ test("the UI hook harness preserves state, refs, and effect cleanup across reren
 });
 
 test("selects exactly one legacy Button on a host without Action or plugin translations", async () => {
-  const harness = createPluginHarness({ state: "critical", action: false });
+  const harness = createPluginHarness({ state: "stale", action: false });
   harness.host.i18n = undefined;
   const chip = findRegistration(harness.registrations, "app-status-bar-right");
   const main = findRegistration(harness.registrations, "main-top-bar");
@@ -352,13 +352,16 @@ test("selects exactly one legacy Button on a host without Action or plugin trans
 
   assert.equal(chipButtons.length, 1);
   assert.equal(mainButtons.length, 1);
-  assert.equal(chipButtons[0].props.className, "ghs-chip ghs-crit");
+  assert.equal(chipButtons[0].props.className, "ghs-chip ghs-min");
   assert.equal(chipButtons[0].props.style.minHeight, "2.75rem");
-  assert.equal(mainButtons[0].props.className, "ghs-banner ghs-crit");
+  assert.equal(mainButtons[0].props.className, "ghs-banner ghs-min");
   assert.equal(chipButtons[0].children.length, 1, "the legacy chip shows only its icon");
   assert.equal(typeof chipButtons[0].children[0].type, "function");
-  assert.equal(harness.React.render(chipButtons[0].children[0].type).type, "svg");
-  assert.match(chipButtons[0].props.title, /Major outage.*Open GitHub status details/);
+  const staleMark = harness.React.render(chipButtons[0].children[0].type, chipButtons[0].children[0].props);
+  assert.equal(staleMark.type, "svg");
+  assert.equal(staleMark.children[1].props.className, "ghs-mark-stale-indicator");
+  assert.match(chipButtons[0].props.title, /Degraded performance.*stale data.*Open GitHub status details/);
+  assert.equal(chipButtons[0].props["aria-label"], "GitHub status: Degraded performance, stale data");
   assert.equal(walk(chipTree, (node) => node.type === harness.Action).length, 0);
   assert.equal(walk(mainTree, (node) => node.type === harness.Action).length, 0);
 
