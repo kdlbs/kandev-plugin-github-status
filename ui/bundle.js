@@ -1,8 +1,8 @@
 // kandev-plugin-github-status UI bundle (no-build ES module).
 //
 // Quiet when healthy, loud when not:
-//   • app-status-bar-right — always. A recessed dot + "GitHub" while all is
-//     well; a colored pill the moment a component kandev depends on degrades.
+//   • app-status-bar-right — always. A compact GitHub icon, muted while all
+//     is well and colored when a component kandev depends on degrades.
 //   • main-top-bar        — only during a degradation, so Home/Kanban/Tasks
 //     carry an unmissable indicator.
 //   • chat-top-bar        — the same incident indicator on an open task.
@@ -94,13 +94,6 @@
     },
   };
 
-  const ACTION_SEVERITY_COPY = {
-    operational: ["actionOperational", "Operational"],
-    maintenance: ["actionMaintenance", "Maintenance"],
-    minor: ["actionMinor", "Degraded"],
-    major: ["actionMajor", "Partial outage"],
-    critical: ["actionCritical", "Major outage"],
-  };
   const ACTION_HEADLINE_COPY = {
     operational: ["actionHeadlineOperational", "All systems operational"],
     maintenance: ["actionHeadlineMaintenance", "Maintenance in progress"],
@@ -123,11 +116,6 @@
       }
       return translation.t(key, { defaultValue: fallback, values });
     };
-  }
-
-  function actionSeverityLabel(t, severity) {
-    const [key, fallback] = ACTION_SEVERITY_COPY[severity] || ACTION_SEVERITY_COPY.operational;
-    return t(key, fallback);
   }
 
   function actionSeverityHeadline(t, severity) {
@@ -715,18 +703,12 @@
 
       const Action = host.ui && host.ui.Action;
       if (typeof Action === "function") {
-        const actionText =
-          !payload || severity === "operational"
-            ? t("actionProvider", "GitHub")
-            : actionSeverityLabel(t, severity);
         return h(
           React.Fragment,
           null,
           h(Action, {
             label: t("actionLabel", "GitHub status"),
             icon: h(StatusActionIcon, { active: loud, stale }),
-            text: actionText,
-            badge: stale ? t("actionStale", "Stale") : undefined,
             tone: actionTone(severity),
             tooltip: statusActionTooltip(t, payload, loading),
             onClick: () => openStatusModal(),
@@ -736,8 +718,7 @@
         );
       }
 
-      const label = loud ? `GitHub · ${meta.label}` : "GitHub";
-      const title = loading && !payload ? "Checking GitHub status…" : `${meta.headline} — click for details`;
+      const title = statusActionTooltip(t, payload, loading);
 
       return h(
         React.Fragment,
@@ -762,9 +743,7 @@
             "aria-label": `GitHub status: ${meta.headline}`,
             title,
           },
-          h("span", { className: "ghs-dot" }),
-          h("span", { className: "ghs-chip-label" }, label),
-          stale ? h("span", { className: "ghs-chip-stale" }, "stale") : null,
+          h(GitHubMark),
         ),
         h(ToastStack, { toasts, dismiss }),
       );
@@ -778,8 +757,7 @@
     // every other control in the host's top-bar actions row. A labelled pill
     // here is ~190px in a row that is otherwise all icons — it crowds the
     // bar and covers the task search. The severity colour on a GitHub mark
-    // carries the signal; the words live in the chip, the hover title, and
-    // the modal.
+    // carries the signal; the words live in the hover title and the modal.
     function GitHubMark() {
       // GitHub's Invertocat, inlined so the button needs no asset request and
       // inherits currentColor from the severity token.
@@ -804,8 +782,6 @@
         return h(Action, {
           label: t("actionLabel", "GitHub status"),
           icon: h(StatusActionIcon, { active: true, stale: Boolean(payload.stale) }),
-          text: actionSeverityLabel(t, payload.overall),
-          badge: payload.stale ? t("actionStale", "Stale") : undefined,
           tone: actionTone(payload.overall),
           tooltip: statusActionTooltip(t, payload, false),
           onClick: () => openStatusModal(),
