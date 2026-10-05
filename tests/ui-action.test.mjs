@@ -117,7 +117,7 @@ function findRegistration(registrations, slot) {
   return matches[0].component;
 }
 
-function createPluginHarness({ state, action = true, locale = "en" }) {
+function createPluginHarness({ state, action = true, locale = "en", oldObjectHasOwn = false }) {
   const React = createReact();
   const catalogs = {};
   const registrations = [];
@@ -134,7 +134,15 @@ function createPluginHarness({ state, action = true, locale = "en" }) {
     },
   };
 
+  const runtimeObject = oldObjectHasOwn
+    ? new Proxy(Object, {
+        get(target, property) {
+          return property === "hasOwn" ? undefined : Reflect.get(target, property, target);
+        },
+      })
+    : Object;
   runInNewContext(bundle, {
+    Object: runtimeObject,
     window,
     URLSearchParams,
     console,
@@ -284,8 +292,8 @@ test("uses plugin translations and values interpolation for the complete action 
   assert.match(action.props.tooltip, /Abrir detalhes do estado do GitHub/);
 });
 
-test("interpolates the complete status tooltip when Action exists without host translations", async () => {
-  const harness = createPluginHarness({ state: "critical" });
+test("interpolates the status tooltip without host translations or Object.hasOwn", async () => {
+  const harness = createPluginHarness({ state: "critical", oldObjectHasOwn: true });
   harness.host.i18n = undefined;
   const chip = findRegistration(harness.registrations, "app-status-bar-right");
   const action = walk(

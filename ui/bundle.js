@@ -116,7 +116,9 @@
     return (key, fallback, values) => {
       if (!translation || typeof translation.t !== "function") {
         return fallback.replace(/\{\{([^}]+)\}\}/g, (placeholder, name) =>
-          values && Object.hasOwn(values, name) ? String(values[name]) : placeholder,
+          values && Object.prototype.hasOwnProperty.call(values, name)
+            ? String(values[name])
+            : placeholder,
         );
       }
       return translation.t(key, { defaultValue: fallback, values });
