@@ -48,6 +48,139 @@
   };
   const componentLabel = (status) => COMPONENT_LABEL[status] || "Unknown";
 
+  // The status actions are the first copy in this plugin that uses the
+  // host's plugin-scoped translation catalog. Older hosts keep the existing
+  // English Button fallback below.
+  const STATUS_ACTION_TRANSLATIONS = {
+    en: {
+      actionLabel: "GitHub status",
+      actionProvider: "GitHub",
+      actionOperational: "Operational",
+      actionMaintenance: "Maintenance",
+      actionMinor: "Degraded",
+      actionMajor: "Partial outage",
+      actionCritical: "Major outage",
+      actionHeadlineOperational: "All systems operational",
+      actionHeadlineMaintenance: "Maintenance in progress",
+      actionHeadlineMinor: "Degraded performance",
+      actionHeadlineMajor: "Partial outage",
+      actionHeadlineCritical: "Major outage",
+      actionStale: "Stale",
+      actionStaleQualifier: " (stale data)",
+      actionCheckingTooltip: "Checking GitHub status",
+      actionUnavailableTooltip: "GitHub status is unavailable. Open status details.",
+      actionOperationalTooltip: "All systems operational. Open GitHub status details.",
+      actionTooltip: "{{status}}{{details}}{{stale}}. Open GitHub status details.",
+    },
+    "pt-pt": {
+      actionLabel: "Estado do GitHub",
+      actionProvider: "GitHub",
+      actionOperational: "Operacional",
+      actionMaintenance: "Manutenção",
+      actionMinor: "Desempenho degradado",
+      actionMajor: "Interrupção parcial",
+      actionCritical: "Interrupção grave",
+      actionHeadlineOperational: "Todos os sistemas operacionais",
+      actionHeadlineMaintenance: "Manutenção em curso",
+      actionHeadlineMinor: "Desempenho degradado",
+      actionHeadlineMajor: "Interrupção parcial",
+      actionHeadlineCritical: "Interrupção grave",
+      actionStale: "Desatualizado",
+      actionStaleQualifier: " (dados desatualizados)",
+      actionCheckingTooltip: "A verificar o estado do GitHub",
+      actionUnavailableTooltip: "O estado do GitHub não está disponível. Abrir detalhes do estado.",
+      actionOperationalTooltip: "Todos os sistemas operacionais. Abrir detalhes do estado do GitHub.",
+      actionTooltip: "{{status}}{{details}}{{stale}}. Abrir detalhes do estado do GitHub.",
+    },
+  };
+
+  const ACTION_SEVERITY_COPY = {
+    operational: ["actionOperational", "Operational"],
+    maintenance: ["actionMaintenance", "Maintenance"],
+    minor: ["actionMinor", "Degraded"],
+    major: ["actionMajor", "Partial outage"],
+    critical: ["actionCritical", "Major outage"],
+  };
+  const ACTION_HEADLINE_COPY = {
+    operational: ["actionHeadlineOperational", "All systems operational"],
+    maintenance: ["actionHeadlineMaintenance", "Maintenance in progress"],
+    minor: ["actionHeadlineMinor", "Degraded performance"],
+    major: ["actionHeadlineMajor", "Partial outage"],
+    critical: ["actionHeadlineCritical", "Major outage"],
+  };
+
+  function useActionTranslator(host) {
+    const useTranslation = host.i18n && host.i18n.useTranslation;
+    const translation =
+      typeof useTranslation === "function" ? useTranslation() : null;
+    return (key, fallback, values) => {
+      if (!translation || typeof translation.t !== "function") {
+        return fallback.replace(/\{\{([^}]+)\}\}/g, (placeholder, name) =>
+          values && Object.prototype.hasOwnProperty.call(values, name)
+            ? String(values[name])
+            : placeholder,
+        );
+      }
+      return translation.t(key, { defaultValue: fallback, values });
+    };
+  }
+
+  function actionSeverityLabel(t, severity) {
+    const [key, fallback] = ACTION_SEVERITY_COPY[severity] || ACTION_SEVERITY_COPY.operational;
+    return t(key, fallback);
+  }
+
+  function actionSeverityHeadline(t, severity) {
+    const [key, fallback] = ACTION_HEADLINE_COPY[severity] || ACTION_HEADLINE_COPY.operational;
+    return t(key, fallback);
+  }
+
+  function actionTone(severity) {
+    if (severity === "minor") return "warning";
+    if (severity === "major" || severity === "critical") return "danger";
+    return "neutral";
+  }
+
+  function statusActionDetails(payload) {
+    const snapshot = payload && payload.snapshot;
+    const incidents = (snapshot && snapshot.incidents) || [];
+    if (incidents.length && incidents[0].name) return incidents[0].name;
+    return ((snapshot && snapshot.keyComponents) || [])
+      .filter((component) => component.severity !== "operational")
+      .map((component) => component.name)
+      .join(", ");
+  }
+
+  function statusActionTooltip(t, payload, loading) {
+    if (loading && !payload) return t("actionCheckingTooltip", "Checking GitHub status");
+    if (!payload) {
+      return t(
+        "actionUnavailableTooltip",
+        "GitHub status is unavailable. Open status details.",
+      );
+    }
+    if (payload.overall === "operational" && !payload.stale) {
+      return t(
+        "actionOperationalTooltip",
+        "All systems operational. Open GitHub status details.",
+      );
+    }
+    const stale = payload.stale
+      ? t("actionStaleQualifier", " (stale data)")
+      : "";
+    return t(
+      "actionTooltip",
+      "{{status}}{{details}}{{stale}}. Open GitHub status details.",
+      {
+        status: actionSeverityHeadline(t, payload.overall),
+        details: statusActionDetails(payload)
+          ? " — " + statusActionDetails(payload)
+          : "",
+        stale,
+      },
+    );
+  }
+
   const INCIDENT_STATUS_LABEL = {
     investigating: "Investigating",
     identified: "Identified",
@@ -287,6 +420,33 @@
               ),
             )
           : null,
+      );
+    }
+
+    // The glyph is plugin content inside the host-owned Action icon box. The
+    // host controls the box and outer button geometry on every surface.
+    function StatusActionIcon({ active, stale }) {
+      let indicatorClass = "ghs-action-indicator";
+      if (active && !stale) indicatorClass += " ghs-action-indicator-active";
+      if (stale) indicatorClass += " ghs-action-indicator-stale";
+      return h(
+        "svg",
+        {
+          className: "ghs-action-mark",
+          viewBox: "0 0 16 16",
+          "aria-hidden": "true",
+          focusable: "false",
+        },
+        h("path", {
+          fill: "currentColor",
+          d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z",
+        }),
+        h("circle", {
+          cx: "13",
+          cy: "3",
+          r: "2.35",
+          className: indicatorClass,
+        }),
       );
     }
 
@@ -545,12 +705,36 @@
       const instanceId = React.useRef(++nextInstanceId).current;
       const { payload, loading } = useStatus();
       const { toasts, dismiss } = useToasts(instanceId);
+      const t = useActionTranslator(host);
       const mobile = slotProps && slotProps.presentation === "mobile-drawer";
 
       const severity = (payload && payload.overall) || "operational";
       const loud = Boolean(payload && payload.loud);
       const meta = sev(severity);
       const stale = Boolean(payload && payload.stale);
+
+      const Action = host.ui && host.ui.Action;
+      if (typeof Action === "function") {
+        const actionText =
+          !payload || severity === "operational"
+            ? t("actionProvider", "GitHub")
+            : actionSeverityLabel(t, severity);
+        return h(
+          React.Fragment,
+          null,
+          h(Action, {
+            label: t("actionLabel", "GitHub status"),
+            icon: h(StatusActionIcon, { active: loud, stale }),
+            text: actionText,
+            badge: stale ? t("actionStale", "Stale") : undefined,
+            tone: actionTone(severity),
+            tooltip: statusActionTooltip(t, payload, loading),
+            onClick: () => openStatusModal(),
+            "data-testid": "github-status-chip",
+          }),
+          h(ToastStack, { toasts, dismiss }),
+        );
+      }
 
       const label = loud ? `GitHub · ${meta.label}` : "GitHub";
       const title = loading && !payload ? "Checking GitHub status…" : `${meta.headline} — click for details`;
@@ -611,9 +795,24 @@
 
     function StatusBanner() {
       const { payload } = useStatus();
+      const t = useActionTranslator(host);
       if (!payload || !payload.loud) return null;
 
       const meta = sev(payload.overall);
+      const Action = host.ui && host.ui.Action;
+      if (typeof Action === "function") {
+        return h(Action, {
+          label: t("actionLabel", "GitHub status"),
+          icon: h(StatusActionIcon, { active: true, stale: Boolean(payload.stale) }),
+          text: actionSeverityLabel(t, payload.overall),
+          badge: payload.stale ? t("actionStale", "Stale") : undefined,
+          tone: actionTone(payload.overall),
+          tooltip: statusActionTooltip(t, payload, false),
+          onClick: () => openStatusModal(),
+          "data-testid": "github-status-topbar-action",
+        });
+      }
+
       const snap = payload.snapshot;
       const incident = ((snap && snap.incidents) || [])[0];
       const affected = ((snap && snap.keyComponents) || [])
@@ -710,6 +909,9 @@
 
       const ui = makeUI(host, activeStore);
 
+      if (typeof registry.registerTranslations === "function") {
+        registry.registerTranslations(STATUS_ACTION_TRANSLATIONS);
+      }
       registry.registerComponent("app-status-bar-right", ui.StatusChip);
       registry.registerComponent("main-top-bar", ui.StatusBanner);
       registry.registerComponent("chat-top-bar", ui.StatusBanner);

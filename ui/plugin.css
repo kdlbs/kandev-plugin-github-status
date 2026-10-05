@@ -211,8 +211,28 @@
     inset 0 0 0 1.5px var(--ghs-dot);
   animation: none;
 }
+
+/* The Action owns the outer button and icon box. These rules style only the
+ * status mark's own SVG indicator, which stays inside that host-owned box. */
+.ghs-action-mark {
+  display: block;
+}
+.ghs-action-indicator {
+  fill: currentColor;
+  stroke: var(--background);
+  stroke-width: 1.5px;
+}
+.ghs-action-indicator-active {
+  animation: ghs-pulse 1.8s ease-in-out infinite;
+}
+.ghs-action-indicator-stale {
+  fill: var(--background);
+  stroke: currentColor;
+  animation: none;
+}
 @media (prefers-reduced-motion: reduce) {
-  .ghs-banner-pip {
+  .ghs-banner-pip,
+  .ghs-action-indicator {
     animation: none;
   }
 }
