@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0] - 2026-10-05
+
+### Changed
+
+- Use semantic actions for GitHub status (865adb0)
+
+
 ## [0.1.3] - 2026-09-30
 
 ### Changed
