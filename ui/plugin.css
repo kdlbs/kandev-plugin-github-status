@@ -94,15 +94,11 @@
 }
 
 /* ── status-bar chip ─────────────────────────────────────────────────────── */
-/* Healthy: a small dot and muted text, visually recessed — it should read as
- * furniture. Degraded: the pill takes the severity color and pulses once. */
+/* A compact GitHub mark: muted when healthy, tinted when degraded. */
 .ghs-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  /* The status bar is `leading-none`; give the label room for its own
-   * descenders rather than inheriting a line box shorter than the glyphs. */
-  line-height: 1.4;
+  justify-content: center;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -116,34 +112,12 @@
 .ghs-chip:hover {
   color: var(--foreground);
 }
-.ghs-chip[data-loud="false"] .ghs-dot {
-  /* Recessed: the healthy dot is a hint, not a green light demanding
-   * attention. */
-  background: color-mix(in oklab, var(--ghs-dot) 55%, var(--muted-foreground));
-  opacity: 0.75;
-}
 .ghs-chip[data-loud="true"] {
   background: var(--ghs-soft);
   border-color: var(--ghs-bd);
   color: var(--ghs-fg);
   font-weight: 600;
   padding: 0 0.45rem;
-}
-.ghs-chip[data-loud="true"] .ghs-dot {
-  animation: ghs-pulse 1.8s ease-in-out infinite;
-}
-.ghs-chip[data-stale="true"] .ghs-dot {
-  /* A stale reading is a hollow dot: we are showing you the last thing we
-   * know, not a live one. */
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--ghs-dot, var(--muted-foreground));
-  animation: none;
-}
-.ghs-chip-stale {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.7;
 }
 @keyframes ghs-pulse {
   0%,
@@ -164,8 +138,7 @@
  *
  * So the banner is one more 32x32 icon button. It is unmissable by being the
  * only coloured, pulsing thing in a row of monochrome icons, not by being
- * large. The words are in the status-bar chip, the hover title, and the
- * modal. */
+ * large. The words are in the hover title and the modal. */
 .ghs-banner {
   display: inline-flex;
   align-items: center;
@@ -189,6 +162,11 @@
   width: 1rem;
   height: 1rem;
   display: block;
+}
+.ghs-mark-stale-indicator {
+  fill: var(--background);
+  stroke: currentColor;
+  stroke-width: 1.5px;
 }
 
 /* The pip is the "look at me": a small severity dot notched into the corner

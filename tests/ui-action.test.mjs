@@ -221,7 +221,9 @@ test("uses one localized semantic Action for healthy status and keeps healthy to
 
   assert.ok(action, "the new host receives one Action");
   assert.equal(action.props.label, "GitHub status");
-  assert.equal(action.props.text, "GitHub");
+  assert.equal(action.props.text, undefined);
+  assert.equal(action.props.badge, undefined);
+  assert.ok(action.props.icon);
   assert.equal(action.props.tone, "neutral");
   assert.equal(action.props.tooltip, "All systems operational. Open GitHub status details.");
   assert.equal(action.props.className, undefined);
@@ -233,11 +235,11 @@ test("uses one localized semantic Action for healthy status and keeps healthy to
   assert.deepEqual(harness.catalogs.en.actionTooltip, "{{status}}{{details}}{{stale}}. Open GitHub status details.");
 });
 
-test("maps degraded, critical, and stale fixtures into status text, tone, tooltip, and details action", async (t) => {
+test("keeps degraded, critical, and stale actions icon-only with tone, tooltip, and details", async (t) => {
   for (const fixture of [
-    { state: "degraded", text: "Degraded", tone: "warning" },
-    { state: "critical", text: "Major outage", tone: "danger" },
-    { state: "stale", text: "Degraded", tone: "warning", badge: "Stale" },
+    { state: "degraded", tone: "warning" },
+    { state: "critical", tone: "danger" },
+    { state: "stale", tone: "warning" },
   ]) {
     await t.test(fixture.state, async () => {
       const harness = createPluginHarness({ state: fixture.state });
@@ -257,17 +259,19 @@ test("maps degraded, critical, and stale fixtures into status text, tone, toolti
       for (const action of [chipAction, mainAction, chatAction]) {
         assert.equal(action.props.label, "GitHub status");
         assert.equal(action.props.tone, fixture.tone);
+        assert.ok(action.props.icon);
+        assert.equal(action.props.text, undefined);
+        assert.equal(action.props.badge, undefined);
         assert.match(action.props.tooltip, /Open GitHub status details/);
         assert.equal(action.props.style, undefined, "the host owns responsive dimensions");
         assert.equal(action.props.className, undefined, "the host owns the action shell");
       }
-      assert.equal(chipAction.props.text, fixture.text);
-      assert.equal(chipAction.props.badge, fixture.badge);
       assert.match(chipAction.props.tooltip, new RegExp(fixtures[fixture.state].snapshot.incidents[0].name));
-      assert.equal(mainAction.props.text, fixture.text);
-      assert.equal(mainAction.props.badge, fixture.badge);
-      assert.equal(chatAction.props.text, fixture.text);
-      assert.equal(chatAction.props.badge, fixture.badge);
+      if (fixture.state === "stale") {
+        for (const action of [chipAction, mainAction, chatAction]) {
+          assert.match(action.props.tooltip, /stale data/);
+        }
+      }
 
       mainAction.props.onClick({ type: "keyboard-or-pointer-activation" });
       assert.equal(harness.modalCalls.length, 1, "the action opens the existing details modal");
@@ -286,7 +290,7 @@ test("uses plugin translations and values interpolation for the complete action 
   )[0];
 
   assert.equal(action.props.label, "Estado do GitHub");
-  assert.equal(action.props.text, "Interrupção grave");
+  assert.equal(action.props.text, undefined);
   assert.match(action.props.tooltip, /^Interrupção grave/);
   assert.match(action.props.tooltip, /Widespread outage affecting github\.com/);
   assert.match(action.props.tooltip, /Abrir detalhes do estado do GitHub/);
@@ -335,7 +339,7 @@ test("the UI hook harness preserves state, refs, and effect cleanup across reren
 });
 
 test("selects exactly one legacy Button on a host without Action or plugin translations", async () => {
-  const harness = createPluginHarness({ state: "critical", action: false });
+  const harness = createPluginHarness({ state: "stale", action: false });
   harness.host.i18n = undefined;
   const chip = findRegistration(harness.registrations, "app-status-bar-right");
   const main = findRegistration(harness.registrations, "main-top-bar");
@@ -348,9 +352,16 @@ test("selects exactly one legacy Button on a host without Action or plugin trans
 
   assert.equal(chipButtons.length, 1);
   assert.equal(mainButtons.length, 1);
-  assert.equal(chipButtons[0].props.className, "ghs-chip ghs-crit");
+  assert.equal(chipButtons[0].props.className, "ghs-chip ghs-min");
   assert.equal(chipButtons[0].props.style.minHeight, "2.75rem");
-  assert.equal(mainButtons[0].props.className, "ghs-banner ghs-crit");
+  assert.equal(mainButtons[0].props.className, "ghs-banner ghs-min");
+  assert.equal(chipButtons[0].children.length, 1, "the legacy chip shows only its icon");
+  assert.equal(typeof chipButtons[0].children[0].type, "function");
+  const staleMark = harness.React.render(chipButtons[0].children[0].type, chipButtons[0].children[0].props);
+  assert.equal(staleMark.type, "svg");
+  assert.equal(staleMark.children[1].props.className, "ghs-mark-stale-indicator");
+  assert.match(chipButtons[0].props.title, /Degraded performance.*stale data.*Open GitHub status details/);
+  assert.equal(chipButtons[0].props["aria-label"], "GitHub status: Degraded performance, stale data");
   assert.equal(walk(chipTree, (node) => node.type === harness.Action).length, 0);
   assert.equal(walk(mainTree, (node) => node.type === harness.Action).length, 0);
 

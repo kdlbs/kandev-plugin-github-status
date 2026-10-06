@@ -1,8 +1,8 @@
 // kandev-plugin-github-status UI bundle (no-build ES module).
 //
 // Quiet when healthy, loud when not:
-//   • app-status-bar-right — always. A recessed dot + "GitHub" while all is
-//     well; a colored pill the moment a component kandev depends on degrades.
+//   • app-status-bar-right — always. A compact GitHub icon, muted while all
+//     is well and colored when a component kandev depends on degrades.
 //   • main-top-bar        — only during a degradation, so Home/Kanban/Tasks
 //     carry an unmissable indicator.
 //   • chat-top-bar        — the same incident indicator on an open task.
@@ -94,13 +94,6 @@
     },
   };
 
-  const ACTION_SEVERITY_COPY = {
-    operational: ["actionOperational", "Operational"],
-    maintenance: ["actionMaintenance", "Maintenance"],
-    minor: ["actionMinor", "Degraded"],
-    major: ["actionMajor", "Partial outage"],
-    critical: ["actionCritical", "Major outage"],
-  };
   const ACTION_HEADLINE_COPY = {
     operational: ["actionHeadlineOperational", "All systems operational"],
     maintenance: ["actionHeadlineMaintenance", "Maintenance in progress"],
@@ -123,11 +116,6 @@
       }
       return translation.t(key, { defaultValue: fallback, values });
     };
-  }
-
-  function actionSeverityLabel(t, severity) {
-    const [key, fallback] = ACTION_SEVERITY_COPY[severity] || ACTION_SEVERITY_COPY.operational;
-    return t(key, fallback);
   }
 
   function actionSeverityHeadline(t, severity) {
@@ -715,18 +703,12 @@
 
       const Action = host.ui && host.ui.Action;
       if (typeof Action === "function") {
-        const actionText =
-          !payload || severity === "operational"
-            ? t("actionProvider", "GitHub")
-            : actionSeverityLabel(t, severity);
         return h(
           React.Fragment,
           null,
           h(Action, {
             label: t("actionLabel", "GitHub status"),
             icon: h(StatusActionIcon, { active: loud, stale }),
-            text: actionText,
-            badge: stale ? t("actionStale", "Stale") : undefined,
             tone: actionTone(severity),
             tooltip: statusActionTooltip(t, payload, loading),
             onClick: () => openStatusModal(),
@@ -736,8 +718,7 @@
         );
       }
 
-      const label = loud ? `GitHub · ${meta.label}` : "GitHub";
-      const title = loading && !payload ? "Checking GitHub status…" : `${meta.headline} — click for details`;
+      const title = statusActionTooltip(t, payload, loading);
 
       return h(
         React.Fragment,
@@ -759,12 +740,10 @@
                 }
               : null,
             onClick: () => openStatusModal(),
-            "aria-label": `GitHub status: ${meta.headline}`,
+            "aria-label": `GitHub status: ${meta.headline}${stale ? ", stale data" : ""}`,
             title,
           },
-          h("span", { className: "ghs-dot" }),
-          h("span", { className: "ghs-chip-label" }, label),
-          stale ? h("span", { className: "ghs-chip-stale" }, "stale") : null,
+          h(GitHubMark, { stale }),
         ),
         h(ToastStack, { toasts, dismiss }),
       );
@@ -778,9 +757,8 @@
     // every other control in the host's top-bar actions row. A labelled pill
     // here is ~190px in a row that is otherwise all icons — it crowds the
     // bar and covers the task search. The severity colour on a GitHub mark
-    // carries the signal; the words live in the chip, the hover title, and
-    // the modal.
-    function GitHubMark() {
+    // carries the signal; the words live in the hover title and the modal.
+    function GitHubMark({ stale = false } = {}) {
       // GitHub's Invertocat, inlined so the button needs no asset request and
       // inherits currentColor from the severity token.
       return h(
@@ -790,6 +768,14 @@
           fill: "currentColor",
           d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z",
         }),
+        stale
+          ? h("circle", {
+              cx: "13",
+              cy: "3",
+              r: "2.35",
+              className: "ghs-mark-stale-indicator",
+            })
+          : null,
       );
     }
 
@@ -804,8 +790,6 @@
         return h(Action, {
           label: t("actionLabel", "GitHub status"),
           icon: h(StatusActionIcon, { active: true, stale: Boolean(payload.stale) }),
-          text: actionSeverityLabel(t, payload.overall),
-          badge: payload.stale ? t("actionStale", "Stale") : undefined,
           tone: actionTone(payload.overall),
           tooltip: statusActionTooltip(t, payload, false),
           onClick: () => openStatusModal(),
