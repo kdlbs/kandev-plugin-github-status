@@ -2,12 +2,11 @@
  * Monitor without looking like a different product.
  *
  * Same design intent as CI Monitor: color is a signal, not a fill. Each
- * severity exposes the same five tokens
+ * severity exposes the same four tokens
  *   --ghs-fg    accent text
  *   --ghs-dot   status dot
  *   --ghs-soft  faint pill fill
  *   --ghs-bd    pill border
- *   --ghs-rail  2px left rail on a row
  * ...but every one of them is derived from a HOST theme token
  * (--success / --warning / --destructive / --info / --muted-foreground) with
  * color-mix, rather than hardcoded hex. That is the whole light/dark story:
@@ -24,21 +23,18 @@
   --ghs-dot: var(--success);
   --ghs-soft: color-mix(in oklab, var(--success) 12%, transparent);
   --ghs-bd: color-mix(in oklab, var(--success) 28%, var(--border));
-  --ghs-rail: color-mix(in oklab, var(--success) 55%, transparent);
 }
 .ghs-mnt {
   --ghs-fg: color-mix(in oklab, var(--info) 82%, var(--foreground));
   --ghs-dot: var(--info);
   --ghs-soft: color-mix(in oklab, var(--info) 12%, transparent);
   --ghs-bd: color-mix(in oklab, var(--info) 26%, var(--border));
-  --ghs-rail: color-mix(in oklab, var(--info) 50%, transparent);
 }
 .ghs-min {
   --ghs-fg: color-mix(in oklab, var(--warning) 78%, var(--foreground));
   --ghs-dot: var(--warning);
   --ghs-soft: color-mix(in oklab, var(--warning) 14%, transparent);
   --ghs-bd: color-mix(in oklab, var(--warning) 30%, var(--border));
-  --ghs-rail: color-mix(in oklab, var(--warning) 58%, transparent);
 }
 /* Partial outage sits between warning and destructive — a real problem, but
  * visually distinguishable from "github.com is down". */
@@ -47,14 +43,12 @@
   --ghs-dot: color-mix(in oklab, var(--destructive) 82%, var(--warning));
   --ghs-soft: color-mix(in oklab, var(--destructive) 13%, transparent);
   --ghs-bd: color-mix(in oklab, var(--destructive) 30%, var(--border));
-  --ghs-rail: color-mix(in oklab, var(--destructive) 55%, transparent);
 }
 .ghs-crit {
   --ghs-fg: color-mix(in oklab, var(--destructive) 88%, var(--foreground));
   --ghs-dot: var(--destructive);
   --ghs-soft: color-mix(in oklab, var(--destructive) 17%, transparent);
   --ghs-bd: color-mix(in oklab, var(--destructive) 38%, var(--border));
-  --ghs-rail: color-mix(in oklab, var(--destructive) 68%, transparent);
 }
 
 .ghs-spacer {
@@ -215,221 +209,303 @@
   }
 }
 
-/* ── modal panel ─────────────────────────────────────────────────────────── */
+/* ── modal briefing ─────────────────────────────────────────────────────── */
 .ghs-root {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.15rem;
   width: 100%;
+  min-width: 0;
   color: var(--foreground);
   font-size: 0.8125rem;
-  line-height: 1.45;
+  line-height: 1.5;
 }
-
-.ghs-hero {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.7rem 0.85rem;
-  border-radius: 10px;
-  background: var(--ghs-soft);
-  border: 1px solid var(--ghs-bd);
+.ghs-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
 }
-.ghs-hero-dot {
+.ghs-icon-external {
   width: 0.7rem;
   height: 0.7rem;
-  border-radius: 999px;
-  background: var(--ghs-dot);
-  flex: none;
-  box-shadow: 0 0 0 3px var(--ghs-soft);
 }
-.ghs-hero-text {
-  min-width: 0;
+.ghs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
-.ghs-hero-title {
-  font-size: 0.95rem;
-  font-weight: 650;
-  color: var(--ghs-fg);
+.ghs-toolbar,
+.ghs-freshness {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
-.ghs-hero-sub {
+.ghs-toolbar {
+  justify-content: space-between;
+  flex-wrap: wrap;
   color: var(--muted-foreground);
   font-size: 0.75rem;
 }
-.ghs-hero-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--muted-foreground);
-  font-size: 0.72rem;
+.ghs-freshness {
+  flex-wrap: wrap;
   font-variant-numeric: tabular-nums;
-  flex: none;
 }
 .ghs-stale {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0 0.3rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.62rem;
+  font-size: 0.65rem;
 }
 .ghs-refresh {
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--muted-foreground);
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 7px;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  gap: 0.4rem;
+  height: 1.75rem;
+  min-height: 1.75rem;
+  padding: 0 0.6rem;
+  flex: none;
+  border: 1px solid
+    color-mix(in oklab, var(--border) 80%, var(--muted-foreground));
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--muted) 55%, transparent);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
 }
 .ghs-refresh:hover {
-  color: var(--foreground);
-  background: color-mix(in srgb, var(--muted) 55%, transparent);
+  background: var(--muted);
 }
-
-.ghs-notice {
-  padding: 0.45rem 0.6rem;
-  border-radius: 8px;
-  border: 1px dashed var(--border);
+.ghs-refresh:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.ghs-refresh:focus-visible,
+.ghs-comp-summary:focus-visible,
+.ghs-history:focus-visible,
+.ghs-foot-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.ghs-hero {
+  min-width: 0;
+}
+.ghs-hero-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.ghs-hero-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+.ghs-hero-sub {
+  margin: 0.45rem 0 0;
+  max-width: 70ch;
   color: var(--muted-foreground);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
 }
-
+.ghs-notice {
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+.ghs-recheck-error {
+  color: var(--destructive);
+}
 .ghs-section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  min-width: 0;
 }
 .ghs-h3 {
   margin: 0;
-  font-size: 0.7rem;
-  font-weight: 650;
+  font-size: 0.65rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.075em;
   color: var(--muted-foreground);
 }
-
-/* component rows — same shape as CI Monitor's PR rows: neutral background,
- * a colored rail and a colored pill. */
 .ghs-comps {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
 }
+.ghs-unknown {
+  --ghs-dot: var(--muted-foreground);
+  --ghs-fg: var(--muted-foreground);
+}
+/* Affected services retain even status outlines; healthy rows recede to dividers. */
 .ghs-comp {
+  border: 1px solid color-mix(in oklab, var(--ghs-dot) 45%, var(--border));
+  border-radius: 7px;
+  min-width: 0;
+}
+.ghs-comp-summary {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  box-shadow: inset 2px 0 0 var(--ghs-rail);
-  padding: 0.45rem 0.6rem 0.45rem 0.7rem;
-  transition:
-    background 0.12s ease,
-    border-color 0.12s ease;
-}
-.ghs-comp:hover {
-  background: color-mix(in srgb, var(--muted) 45%, transparent);
-}
-.ghs-comp-main {
-  display: flex;
-  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.65rem 0.7rem;
   min-width: 0;
-  flex: 1;
+  list-style: none;
+}
+summary.ghs-comp-summary {
+  cursor: pointer;
+}
+.ghs-comp-summary::-webkit-details-marker {
+  display: none;
+}
+.ghs-comp-summary:hover {
+  background: color-mix(in oklab, var(--muted) 35%, transparent);
 }
 .ghs-comp-name {
-  font-weight: 560;
+  flex: 1;
+  min-width: 0;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.ghs-comp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--ghs-fg);
+  flex: none;
+  max-width: 50%;
+}
+.ghs-comp-status .ghs-dot,
+.ghs-inc-phase .ghs-dot {
+  width: 0.32rem;
+  height: 0.32rem;
+}
+.ghs-icon-chevron {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: var(--muted-foreground);
+}
+.ghs-comp[open] .ghs-icon-chevron {
+  transform: rotate(180deg);
 }
 .ghs-comp-desc {
+  margin: 0;
+  padding: 0 0.7rem 0.65rem;
+  font-size: 0.75rem;
   color: var(--muted-foreground);
-  font-size: 0.7rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
-
-/* incidents */
+.ghs-comp-healthy {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+.ghs-comp-healthy:last-child {
+  border-bottom: 0;
+}
+.ghs-comp-healthy .ghs-comp-summary {
+  padding: 0.45rem 0;
+}
+.ghs-comp-healthy .ghs-comp-name {
+  font-weight: 400;
+}
+.ghs-comp-healthy .ghs-comp-status {
+  color: var(--muted-foreground);
+}
+.ghs-comp-healthy .ghs-comp-desc {
+  padding-left: 0;
+}
 .ghs-incs {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 1rem;
 }
 .ghs-inc {
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  box-shadow: inset 2px 0 0 var(--ghs-rail);
-  padding: 0.55rem 0.7rem 0.6rem 0.8rem;
   display: flex;
   flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.ghs-inc-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.4rem;
 }
-.ghs-inc-head {
-  display: flex;
+.ghs-inc-phase {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-.ghs-inc-title {
-  font-weight: 600;
-  color: var(--foreground);
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-a.ghs-inc-title:hover {
-  text-decoration: underline;
+  gap: 0.35rem;
+  color: var(--ghs-fg);
+  font-size: 0.7rem;
 }
 .ghs-inc-when {
   color: var(--muted-foreground);
-  font-size: 0.72rem;
-  flex: none;
+  font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
+}
+.ghs-inc-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
 }
 .ghs-inc-body {
   margin: 0;
+  max-width: 70ch;
   color: var(--muted-foreground);
   font-size: 0.76rem;
   white-space: pre-line;
-  max-height: 8.5rem;
-  overflow-y: auto;
+  overflow-wrap: anywhere;
 }
-.ghs-inc-comps {
-  display: flex;
-  flex-wrap: wrap;
+.ghs-history {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
   gap: 0.3rem;
+  min-height: 1.75rem;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  text-underline-offset: 3px;
 }
-/* Affected-component tags inside an incident card. Named -tag, not -chip:
- * .ghs-chip is the status-bar button, and sharing the name leaked this
- * border onto it. */
-.ghs-tag {
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 0 0.32rem;
-  font-size: 0.66rem;
-  color: var(--muted-foreground);
+.ghs-history:hover {
+  color: var(--ghs-fg);
 }
-
 .ghs-foot {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.75rem;
   border-top: 1px solid var(--border);
   padding-top: 0.7rem;
   color: var(--muted-foreground);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
 }
 .ghs-foot-others {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
 }
 .ghs-foot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   color: var(--muted-foreground);
   text-decoration: none;
   flex: none;
@@ -438,7 +514,6 @@ a.ghs-inc-title:hover {
   color: var(--foreground);
   text-decoration: underline;
 }
-
 .ghs-empty,
 .ghs-error {
   padding: 2.5rem 1rem;
@@ -448,6 +523,26 @@ a.ghs-inc-title:hover {
 }
 .ghs-error {
   color: var(--destructive);
+}
+@media (max-width: 767px), (pointer: coarse) {
+  .ghs-refresh {
+    height: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+  }
+  summary.ghs-comp-summary,
+  .ghs-history,
+  .ghs-foot-link {
+    min-height: 2.75rem;
+  }
+}
+@media (max-width: 767px) {
+  .ghs-root {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .ghs-hero-title {
+    font-size: 1.125rem;
+  }
 }
 
 /* ── transition toasts ───────────────────────────────────────────────────── */

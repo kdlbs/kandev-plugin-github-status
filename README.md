@@ -62,13 +62,25 @@ loud, never notified.
 | `app-status-bar-right` | always | A localized GitHub action with a status label, semantic severity tone, and stale badge when needed. Click to open the modal. |
 | `main-top-bar` | only when degraded | A localized, severity-toned GitHub action on Home / Kanban / Tasks. Healthy status renders nothing. |
 | `chat-top-bar` | only when degraded | The same action in the topbar of an open task. |
-| modal | on click | Overall status, the six key components, active incidents (impact, status, latest update, timestamp), upcoming maintenance, and a link out. |
+| modal | on click | Impact summary, affected services first, quieter healthy services, full latest incident updates, maintenance, and provider history links. |
 | toast | only on a transition | "GitHub is degraded" / "GitHub is back to normal", once per change. |
 | `plugin-settings` | Settings → Plugins | The notification toggle. |
 
 Hosts that export `host.ui.Action` render the shared responsive action control.
 Older supported hosts select the existing Button fallback through the same
 registrations. The plugin does not declare a new minimum host version.
+
+The modal keeps all six monitored services visible. Affected entries have a
+thin full border and a labeled status; healthy entries use quiet divider rows.
+Expand a service to read its description. Unknown provider statuses remain
+explicitly unknown rather than being counted as healthy.
+
+Refresh has a visible icon and label, with a 28px desktop control and at least
+44px touch targets on phones and tablets. It rechecks the plugin's cached
+snapshot; it does not force a new GitHub request. The checked time comes from
+the provider-fetch timestamp and does not advance on a cache recheck. A failed
+recheck keeps the last available briefing and displays an inline error.
+Incident history opens the provider's own page.
 
 <table>
 <tr>
@@ -86,6 +98,10 @@ More states in [`docs/`](docs/): `app-healthy`, `app-degraded`, `app-stale`,
 counterparts. `real-app-*.png` are the same surfaces captured from an actual
 running kandev instance with the plugin installed, rather than from the
 offline harness.
+
+The incident and maintenance images above show the current briefing in the
+offline harness with sample provider data. Other screenshots document earlier
+versions and are not evidence of this change installed in a live host.
 
 ## Being a good network citizen
 
@@ -218,6 +234,8 @@ make vet
 make test
 make verify-package-host   # current host platform
 make verify-package        # all five declared platforms
+# With Playwright available, exercise the real bundle and CSS in a browser:
+GHS_PLAYWRIGHT_MODULE=playwright node --test tests/modal-browser.test.mjs
 ```
 
 The test target runs the Go tests, fixture-based UI Action tests, and negative
@@ -275,7 +293,7 @@ docs/harness/            offline render harness for screenshots
   spacing.
 - **Sits next to CI Monitor, does not overlap it.** CI Monitor answers "did *my*
   PR's checks pass". This answers "is the provider up". Same pastel pill
-  vocabulary, same row/rail/pill shapes, adjacent question.
+  vocabulary, affected-only status-colored row outlines, and labeled status pills.
 - **No tooltips in the modal.** `host.ui` has no `TooltipProvider` inside modal
   content on this branch, so every label is rendered inline.
 - **The topbar action follows host sizing.** Its stable accessible label and
