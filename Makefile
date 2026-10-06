@@ -3,7 +3,7 @@
 	verify-package-host clean
 
 BIN := bin/kandev-plugin-github-status
-VERSION := 0.2.0
+VERSION := 0.3.0
 STAGE := .build/stage
 PKG_OUT := kandev-plugin-github-status-$(VERSION).tar.gz
 KANDEV_BACKEND := ../kandev/apps/backend

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0] - 2026-10-06
+
+### Changed
+
+- fix: keep stale status visible on legacy icon (08ae658)
+- ui: make GitHub status icon-only (da6fcda)
+
+
 ## [0.2.0] - 2026-10-05
 
 ### Changed
