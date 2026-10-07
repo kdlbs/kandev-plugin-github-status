@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0] - 2026-10-07
+
+### Changed
+
+- feat: improve GitHub status briefing and refresh control (067d886)
+
+
 ## [0.3.0] - 2026-10-06
 
 ### Changed

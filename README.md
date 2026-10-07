@@ -253,7 +253,7 @@ versions match, then publish
 ### Installing into a running instance
 
 ```bash
-curl -F "package=@kandev-plugin-github-status-0.3.0.tar.gz" \
+curl -F "package=@kandev-plugin-github-status-0.4.0.tar.gz" \
   http://localhost:38429/api/plugins/install
 ```
 
