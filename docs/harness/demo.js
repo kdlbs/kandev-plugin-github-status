@@ -10,6 +10,9 @@
   const STATE = params.get("state") || "healthy";
   const THEME = params.get("theme") === "dark" ? "dark" : "light";
   const VIEW = params.get("view") || "app";
+  const LOCALE = params.get("locale") || "en";
+  const catalogs = {};
+  let statusRequests = 0;
   const SHOW_TOAST = params.get("toast") === "1";
 
   document.documentElement.dataset.theme = THEME;
@@ -37,20 +40,53 @@
     React,
     jsx: React.createElement,
     theme: THEME,
-    store: { getState: () => ({}), setState: () => {}, subscribe: () => () => {} },
+    i18n: {
+      locale: LOCALE,
+      t(key, options = {}) {
+        const catalog = catalogs[LOCALE] || catalogs.en || {};
+        const pluralKey =
+          options.count === undefined
+            ? key
+            : `${key}_${options.count === 1 ? "one" : "other"}`;
+        const message =
+          catalog[pluralKey] || catalog[key] || options.defaultValue || key;
+        const values = { count: options.count, ...options.values };
+        return message.replace(/\{\{([^}]+)\}\}/g, (match, name) =>
+          values[name] === undefined ? match : String(values[name]),
+        );
+      },
+      useTranslation() {
+        return { locale: LOCALE, t: host.i18n.t };
+      },
+    },
+    store: {
+      getState: () => ({}),
+      setState: () => {},
+      subscribe: () => () => {},
+    },
     api: {
       baseUrl: "",
       fetch(path, init) {
         const method = (init && init.method) || "GET";
         if (path.startsWith("webhooks/status")) {
-          const payload = JSON.parse(JSON.stringify(payloads[STATE] || payloads.healthy));
+          statusRequests++;
+          // A bounded relay delay makes the busy/error state inspectable.
+          if (params.get("refresh") === "failed" && statusRequests > 1) {
+            return new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("relay offline")), 300),
+            );
+          }
+          const payload = JSON.parse(
+            JSON.stringify(payloads[STATE] || payloads.healthy),
+          );
           payload.settings = settings;
           // The toast is opt-in in the harness so the default screenshots
           // show the resting state.
           if (!SHOW_TOAST) delete payload.transition;
           return jsonResponse(payload);
         }
-        if (path.startsWith("webhooks/ack")) return jsonResponse({ acknowledged: true });
+        if (path.startsWith("webhooks/ack"))
+          return jsonResponse({ acknowledged: true });
         if (path.startsWith("webhooks/settings")) {
           if (method === "POST" && init && init.body) {
             settings = { ...settings, ...JSON.parse(init.body) };
@@ -72,17 +108,28 @@
           "aria-label": "Toggle",
         }),
       Label: ({ htmlFor, className, children }) =>
-        h("label", { htmlFor, className: `u-label ${className || ""}` }, children),
+        h(
+          "label",
+          { htmlFor, className: `u-label ${className || ""}` },
+          children,
+        ),
     },
     navigate: (href) => console.log("navigate", href),
     openModal: (options) => {
       modalRequest = options;
       render();
-      return { close: () => { modalRequest = null; render(); } };
+      return {
+        close: () => {
+          modalRequest = null;
+          render();
+        },
+      };
     },
   };
 
   const registry = {
+    registerTranslations: (translations) =>
+      Object.assign(catalogs, translations),
     registerComponent: (slot, Component) => {
       slots[slot] = Component;
     },
@@ -131,7 +178,11 @@
           { className: "settings-sub" },
           "Is it me or is it GitHub? A quiet status-bar chip that turns loud when Git Operations, Actions, or the API degrade.",
         ),
-        SettingsPanel ? h(SettingsPanel, { slotProps: { pluginId: host.pluginId, status: "active" } }) : null,
+        SettingsPanel
+          ? h(SettingsPanel, {
+              slotProps: { pluginId: host.pluginId, status: "active" },
+            })
+          : null,
       );
     }
 
@@ -146,7 +197,11 @@
           { className: "sidebar" },
           h("div", { className: "brand" }, "kandev"),
           ["Home", "Kanban", "Tasks", "Office", "Settings"].map((label, i) =>
-            h("div", { className: `navitem${i === 1 ? " active" : ""}`, key: label }, label),
+            h(
+              "div",
+              { className: `navitem${i === 1 ? " active" : ""}`, key: label },
+              label,
+            ),
           ),
         ),
         h(
@@ -159,7 +214,11 @@
             h("span", { className: "spacer" }),
             Banner
               ? h(Banner, {
-                  slotProps: { workspaceId: "ws1", workspaceLabel: "kandev", currentPage: "kanban" },
+                  slotProps: {
+                    workspaceId: "ws1",
+                    workspaceLabel: "kandev",
+                    currentPage: "kanban",
+                  },
                 })
               : null,
           ),
@@ -176,7 +235,11 @@
           h("span", null, "CI ●●"),
           Chip
             ? h(Chip, {
-                slotProps: { placement: "right", presentation: "desktop", density: "compact" },
+                slotProps: {
+                  placement: "right",
+                  presentation: "desktop",
+                  density: "compact",
+                },
               })
             : null,
         ),
@@ -197,7 +260,30 @@
           "div",
           { className: "dialog-head" },
           h("span", { className: "dialog-title" }, request.title || ""),
-          h("button", { className: "dialog-x", onClick: () => { modalRequest = null; render(); } }, "✕"),
+          h(
+            "button",
+            {
+              className: "dialog-x",
+              "aria-label": "Close",
+              onClick: () => {
+                modalRequest = null;
+                render();
+              },
+            },
+            h(
+              "svg",
+              {
+                width: 16,
+                height: 16,
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: 1.5,
+                "aria-hidden": true,
+              },
+              h("path", { d: "M6 6l12 12M18 6L6 18" }),
+            ),
+          ),
         ),
         h("div", { className: "dialog-body" }, h(Content)),
       ),

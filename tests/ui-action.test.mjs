@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 
-const bundle = readFileSync(new URL("../ui/bundle.js", import.meta.url), "utf8");
+const bundle = readFileSync(
+  new URL("../ui/bundle.js", import.meta.url),
+  "utf8",
+);
 const fixtures = JSON.parse(
   readFileSync(new URL("../docs/harness/demo.json", import.meta.url), "utf8"),
 );
@@ -33,7 +36,8 @@ function createReact() {
     useState(initialValue) {
       const slot = hook("state", initialValue);
       if (!slot.initialized) {
-        slot.value = typeof initialValue === "function" ? initialValue() : initialValue;
+        slot.value =
+          typeof initialValue === "function" ? initialValue() : initialValue;
         slot.initialized = true;
       }
       return [
@@ -53,7 +57,9 @@ function createReact() {
         !slot.initialized ||
         dependencies === undefined ||
         dependencies.length !== slot.dependencies.length ||
-        dependencies.some((value, index) => !Object.is(value, slot.dependencies[index]));
+        dependencies.some(
+          (value, index) => !Object.is(value, slot.dependencies[index]),
+        );
       if (changed) {
         const previousCleanup = slot.cleanup;
         slot.dependencies = dependencies;
@@ -70,7 +76,9 @@ function createReact() {
         !slot.initialized ||
         dependencies === undefined ||
         dependencies.length !== slot.dependencies.length ||
-        dependencies.some((value, index) => !Object.is(value, slot.dependencies[index]));
+        dependencies.some(
+          (value, index) => !Object.is(value, slot.dependencies[index]),
+        );
       if (changed) {
         slot.value = callback;
         slot.dependencies = dependencies;
@@ -117,7 +125,14 @@ function findRegistration(registrations, slot) {
   return matches[0].component;
 }
 
-function createPluginHarness({ state, action = true, locale = "en", oldObjectHasOwn = false }) {
+function createPluginHarness({
+  state,
+  action = true,
+  locale = "en",
+  oldObjectHasOwn = false,
+  payload,
+  fetchStatus,
+}) {
   const React = createReact();
   const catalogs = {};
   const registrations = [];
@@ -137,7 +152,9 @@ function createPluginHarness({ state, action = true, locale = "en", oldObjectHas
   const runtimeObject = oldObjectHasOwn
     ? new Proxy(Object, {
         get(target, property) {
-          return property === "hasOwn" ? undefined : Reflect.get(target, property, target);
+          return property === "hasOwn"
+            ? undefined
+            : Reflect.get(target, property, target);
         },
       })
     : Object;
@@ -161,11 +178,16 @@ function createPluginHarness({ state, action = true, locale = "en", oldObjectHas
       useTranslation() {
         return {
           t(key, options = {}) {
+            const pluralKey =
+              options.count === undefined
+                ? key
+                : `${key}_${options.count === 1 ? "one" : "other"}`;
             const message =
-              (catalogs[locale] && catalogs[locale][key]) ||
+              (catalogs[locale] &&
+                (catalogs[locale][pluralKey] || catalogs[locale][key])) ||
               options.defaultValue ||
               key;
-            const values = options.values || {};
+            const values = { count: options.count, ...options.values };
             return message.replace(/\{\{([^}]+)\}\}/g, (match, name) =>
               Object.hasOwn(values, name) ? String(values[name]) : match,
             );
@@ -177,12 +199,15 @@ function createPluginHarness({ state, action = true, locale = "en", oldObjectHas
       fetch(path) {
         apiCalls.push(path);
         if (path.startsWith("webhooks/ack")) {
-          return Promise.resolve({ json: async () => ({ acknowledged: true }) });
+          return Promise.resolve({
+            json: async () => ({ acknowledged: true }),
+          });
         }
+        if (fetchStatus) return fetchStatus(path);
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: async () => fixtures[state],
+          json: async () => payload || fixtures[state],
         });
       },
     },
@@ -225,14 +250,20 @@ test("uses one localized semantic Action for healthy status and keeps healthy to
   assert.equal(action.props.badge, undefined);
   assert.ok(action.props.icon);
   assert.equal(action.props.tone, "neutral");
-  assert.equal(action.props.tooltip, "All systems operational. Open GitHub status details.");
+  assert.equal(
+    action.props.tooltip,
+    "All systems operational. Open GitHub status details.",
+  );
   assert.equal(action.props.className, undefined);
   assert.equal(action.props.style, undefined);
   assert.equal(action.props.variant, undefined);
   assert.equal(walk(action, (node) => node.type === "button").length, 0);
   assert.equal(await renderWithStatus(harness, main), null);
   assert.equal(await renderWithStatus(harness, chat), null);
-  assert.deepEqual(harness.catalogs.en.actionTooltip, "{{status}}{{details}}{{stale}}. Open GitHub status details.");
+  assert.deepEqual(
+    harness.catalogs.en.actionTooltip,
+    "{{status}}{{details}}{{stale}}. Open GitHub status details.",
+  );
 });
 
 test("keeps degraded, critical, and stale actions icon-only with tone, tooltip, and details", async (t) => {
@@ -243,15 +274,27 @@ test("keeps degraded, critical, and stale actions icon-only with tone, tooltip, 
   ]) {
     await t.test(fixture.state, async () => {
       const harness = createPluginHarness({ state: fixture.state });
-      const chip = findRegistration(harness.registrations, "app-status-bar-right");
+      const chip = findRegistration(
+        harness.registrations,
+        "app-status-bar-right",
+      );
       const main = findRegistration(harness.registrations, "main-top-bar");
       const chat = findRegistration(harness.registrations, "chat-top-bar");
       const chipTree = await renderWithStatus(harness, chip);
-      const chipAction = walk(chipTree, (node) => node.type === harness.Action)[0];
+      const chipAction = walk(
+        chipTree,
+        (node) => node.type === harness.Action,
+      )[0];
       const mainTree = await renderWithStatus(harness, main);
       const chatTree = await renderWithStatus(harness, chat);
-      const mainAction = walk(mainTree, (node) => node.type === harness.Action)[0];
-      const chatAction = walk(chatTree, (node) => node.type === harness.Action)[0];
+      const mainAction = walk(
+        mainTree,
+        (node) => node.type === harness.Action,
+      )[0];
+      const chatAction = walk(
+        chatTree,
+        (node) => node.type === harness.Action,
+      )[0];
 
       assert.ok(chipAction);
       assert.ok(mainAction);
@@ -263,10 +306,21 @@ test("keeps degraded, critical, and stale actions icon-only with tone, tooltip, 
         assert.equal(action.props.text, undefined);
         assert.equal(action.props.badge, undefined);
         assert.match(action.props.tooltip, /Open GitHub status details/);
-        assert.equal(action.props.style, undefined, "the host owns responsive dimensions");
-        assert.equal(action.props.className, undefined, "the host owns the action shell");
+        assert.equal(
+          action.props.style,
+          undefined,
+          "the host owns responsive dimensions",
+        );
+        assert.equal(
+          action.props.className,
+          undefined,
+          "the host owns the action shell",
+        );
       }
-      assert.match(chipAction.props.tooltip, new RegExp(fixtures[fixture.state].snapshot.incidents[0].name));
+      assert.match(
+        chipAction.props.tooltip,
+        new RegExp(fixtures[fixture.state].snapshot.incidents[0].name),
+      );
       if (fixture.state === "stale") {
         for (const action of [chipAction, mainAction, chatAction]) {
           assert.match(action.props.tooltip, /stale data/);
@@ -274,7 +328,11 @@ test("keeps degraded, critical, and stale actions icon-only with tone, tooltip, 
       }
 
       mainAction.props.onClick({ type: "keyboard-or-pointer-activation" });
-      assert.equal(harness.modalCalls.length, 1, "the action opens the existing details modal");
+      assert.equal(
+        harness.modalCalls.length,
+        1,
+        "the action opens the existing details modal",
+      );
       assert.equal(harness.modalCalls[0].title, "GitHub Status");
       assert.equal(typeof harness.modalCalls[0].content, "function");
     });
@@ -297,7 +355,10 @@ test("uses plugin translations and values interpolation for the complete action 
 });
 
 test("interpolates the status tooltip without host translations or Object.hasOwn", async () => {
-  const harness = createPluginHarness({ state: "critical", oldObjectHasOwn: true });
+  const harness = createPluginHarness({
+    state: "critical",
+    oldObjectHasOwn: true,
+  });
   harness.host.i18n = undefined;
   const chip = findRegistration(harness.registrations, "app-status-bar-right");
   const action = walk(
@@ -355,16 +416,183 @@ test("selects exactly one legacy Button on a host without Action or plugin trans
   assert.equal(chipButtons[0].props.className, "ghs-chip ghs-min");
   assert.equal(chipButtons[0].props.style.minHeight, "2.75rem");
   assert.equal(mainButtons[0].props.className, "ghs-banner ghs-min");
-  assert.equal(chipButtons[0].children.length, 1, "the legacy chip shows only its icon");
+  assert.equal(
+    chipButtons[0].children.length,
+    1,
+    "the legacy chip shows only its icon",
+  );
   assert.equal(typeof chipButtons[0].children[0].type, "function");
-  const staleMark = harness.React.render(chipButtons[0].children[0].type, chipButtons[0].children[0].props);
+  const staleMark = harness.React.render(
+    chipButtons[0].children[0].type,
+    chipButtons[0].children[0].props,
+  );
   assert.equal(staleMark.type, "svg");
-  assert.equal(staleMark.children[1].props.className, "ghs-mark-stale-indicator");
-  assert.match(chipButtons[0].props.title, /Degraded performance.*stale data.*Open GitHub status details/);
-  assert.equal(chipButtons[0].props["aria-label"], "GitHub status: Degraded performance, stale data");
-  assert.equal(walk(chipTree, (node) => node.type === harness.Action).length, 0);
-  assert.equal(walk(mainTree, (node) => node.type === harness.Action).length, 0);
+  assert.equal(
+    staleMark.children[1].props.className,
+    "ghs-mark-stale-indicator",
+  );
+  assert.match(
+    chipButtons[0].props.title,
+    /Degraded performance.*stale data.*Open GitHub status details/,
+  );
+  assert.equal(
+    chipButtons[0].props["aria-label"],
+    "GitHub status: Degraded performance, stale data",
+  );
+  assert.equal(
+    walk(chipTree, (node) => node.type === harness.Action).length,
+    0,
+  );
+  assert.equal(
+    walk(mainTree, (node) => node.type === harness.Action).length,
+    0,
+  );
 
   chipButtons[0].props.onClick();
   assert.equal(harness.modalCalls.length, 1);
+});
+
+function expandTree(harness, tree) {
+  if (Array.isArray(tree)) return tree.map((node) => expandTree(harness, node));
+  if (!tree || typeof tree !== "object") return tree;
+  if (typeof tree.type === "function")
+    return expandTree(harness, harness.React.render(tree.type, tree.props));
+  return { ...tree, children: expandTree(harness, tree.children) };
+}
+
+function textOf(tree) {
+  if (Array.isArray(tree)) return tree.map(textOf).join(" ");
+  if (tree && typeof tree === "object") return textOf(tree.children);
+  return typeof tree === "string" || typeof tree === "number"
+    ? String(tree)
+    : "";
+}
+
+async function openPanel(harness) {
+  const chip = findRegistration(harness.registrations, "app-status-bar-right");
+  const tree = await renderWithStatus(harness, chip);
+  const action = walk(
+    tree,
+    (node) => node.type === harness.Action || node.type === "button",
+  )[0];
+  (action.props.onClick || action.props.onActivate)();
+  const Panel = harness.modalCalls[0].content;
+  await renderWithStatus(harness, Panel);
+  return () => expandTree(harness, harness.React.render(Panel));
+}
+
+test("briefing partitions reported statuses without treating unknown status as healthy", async () => {
+  const payload = structuredClone(fixtures.incident);
+  payload.snapshot.keyComponents[2].status = "new_provider_status";
+  const harness = createPluginHarness({ state: "incident", payload });
+  const panel = await openPanel(harness);
+  const tree = panel();
+  const groups = walk(
+    tree,
+    (node) => node.type === "section" && node.props["data-service-group"],
+  );
+  assert.deepEqual(
+    groups.map((g) => g.props["data-service-group"]),
+    ["affected", "healthy"],
+  );
+  assert.match(
+    textOf(groups[0]),
+    /Git Operations.*API Requests.*Webhooks.*Unknown.*Actions.*Pull Requests/,
+  );
+  assert.doesNotMatch(textOf(groups[1]), /Webhooks/);
+  assert.match(textOf(tree), /services affected/);
+  assert.equal(payload.snapshot.keyComponents[0].name, "Git Operations");
+});
+
+test("briefing distinguishes active incident, maintenance, healthy, and missing service data", async (t) => {
+  const cases = [
+    ["healthy", null, /All monitored services operational/],
+    ["maintenance", null, /maintenance/i],
+    [
+      "healthy",
+      (p) => {
+        p.overall = "major";
+        p.snapshot.incidents = fixtures.incident.snapshot.incidents;
+      },
+      /Active GitHub incident/,
+    ],
+    [
+      "healthy",
+      (p) => {
+        p.snapshot = null;
+      },
+      /Service status unavailable/,
+    ],
+  ];
+  for (const [state, change, expected] of cases)
+    await t.test(state + (change ? " override" : ""), async () => {
+      const payload = structuredClone(fixtures[state]);
+      change?.(payload);
+      const panel = await openPanel(createPluginHarness({ state, payload }));
+      assert.match(textOf(panel()), expected);
+    });
+});
+
+test("refresh preserves snapshot age, exposes pending state, deduplicates and settles failure", async () => {
+  let reject;
+  let count = 0;
+  const payload = structuredClone(fixtures.incident);
+  payload.fetchedAt = new Date(Date.now() - 120000).toISOString();
+  const harness = createPluginHarness({
+    state: "incident",
+    fetchStatus: () => {
+      count++;
+      if (count === 1)
+        return Promise.resolve({
+          ok: true,
+          json: async () => payload,
+        });
+      return new Promise((_, fail) => {
+        reject = fail;
+      });
+    },
+  });
+  const panel = await openPanel(harness);
+  const refresh = () =>
+    walk(panel(), (n) => n.props.className === "ghs-refresh")[0];
+  const age = () =>
+    textOf(walk(panel(), (n) => n.props.className === "ghs-checked")[0]);
+  const before = age();
+  assert.match(before, /Checked 2m ago/);
+  refresh().props.onClick();
+  refresh().props.onClick();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(count, 2);
+  assert.equal(refresh().props.disabled, true);
+  assert.match(textOf(refresh()), /Refreshing/);
+  assert.equal(age(), before);
+  reject(new Error("relay offline"));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(refresh().props.disabled, false);
+  assert.match(textOf(panel()), /Could not recheck status/);
+  assert.match(textOf(panel()), /Git Operations/);
+  assert.equal(age(), before);
+});
+
+test("missing fetch time does not imply unavailable service status", async () => {
+  const panel = await openPanel(createPluginHarness({ state: "healthy" }));
+  assert.match(textOf(panel()), /Fetch time unavailable/);
+  assert.match(textOf(panel()), /All monitored services operational/);
+  assert.doesNotMatch(textOf(panel()), /Service status unavailable/);
+});
+
+test("briefing catalogs cover seven locales and interpolate service counts", async () => {
+  const harness = createPluginHarness({ state: "incident", locale: "pt-pt" });
+  const panel = await openPanel(harness);
+  assert.match(textOf(panel()), /Atualizar/);
+  for (const locale of ["en", "pt-pt", "zh-cn", "zh-hk", "zh-tw", "ja", "ko"]) {
+    assert.ok(harness.catalogs[locale], locale);
+    for (const key of Object.keys(harness.catalogs.en))
+      assert.equal(
+        typeof harness.catalogs[locale][key],
+        "string",
+        locale + ":" + key,
+      );
+  }
+  assert.doesNotMatch(textOf(panel()), /\{\{/);
 });
