@@ -26,21 +26,22 @@ func TestVerifyHostManifest(t *testing.T) {
 	for _, tc := range []struct {
 		name, body string
 		ok         bool
+		wantErr    string
 	}{
-		{"normalized host", normalized, true},
-		{"unfiltered manifest", string(source), false},
-		{"capability changed", strings.Replace(normalized, "state: true", "state: false", 1), false},
-		{"minimum changed", strings.Replace(normalized, "0.99.0", "0.98.0", 1), false},
-		{"API changed", strings.Replace(normalized, "api_version: 1", "api_version: 2", 1), false},
-		{"UI changed", strings.Replace(normalized, "/ui/bundle.js", "/ui/other.js", 1), false},
-		{"webhook changed", strings.Replace(normalized, "key: ack", "key: other", 1), false},
-		{"extra field", normalized + "unreviewed: true\n", false},
-		{"malformed YAML", "not: [yaml", false},
+		{"normalized host", normalized, true, ""},
+		{"unfiltered manifest", string(source), false, ""},
+		{"capability changed", strings.Replace(normalized, "state: true", "state: false", 1), false, ""},
+		{"minimum changed", strings.Replace(normalized, "0.99.0", "0.98.0", 1), false, ""},
+		{"API changed", strings.Replace(normalized, "api_version: 1", "api_version: 2", 1), false, "api_version"},
+		{"UI changed", strings.Replace(normalized, "/ui/bundle.js", "/ui/other.js", 1), false, ""},
+		{"webhook changed", strings.Replace(normalized, "key: ack", "key: other", 1), false, ""},
+		{"extra field", normalized + "unreviewed: true\n", false, ""},
+		{"malformed YAML", "not: [yaml", false, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			err := verifyHostManifest(source, []byte(tc.body), "linux-amd64")
-			if tc.name == "API changed" && (err == nil || !strings.Contains(err.Error(), "api_version")) {
-				t.Fatalf("API mismatch diagnostic must name api_version: %v", err)
+			if tc.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tc.wantErr)) {
+				t.Fatalf("error = %v, want diagnostic containing %q", err, tc.wantErr)
 			}
 			if (err == nil) != tc.ok {
 				t.Fatalf("error = %v, want success %v", err, tc.ok)

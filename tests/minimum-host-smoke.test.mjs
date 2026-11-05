@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, mkdtemp, mkdir, copyFile, cp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { test } from "node:test";
 
 const plugin = "/api/plugins/kandev-plugin-github-status";
@@ -52,12 +55,12 @@ async function runSmoke(options = {}) {
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   try {
-    const child = spawn(process.execPath, [new URL("../scripts/smoke-minimum-host.mjs", import.meta.url).pathname,
+    const child = spawn(process.execPath, [fileURLToPath(options.scriptURL || new URL("../scripts/smoke-minimum-host.mjs", import.meta.url)),
       `http://127.0.0.1:${server.address().port}`]);
     let output = "";
     child.stdout.on("data", (chunk) => { output += chunk; });
     child.stderr.on("data", (chunk) => { output += chunk; });
-    const code = await new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", resolve); });
+    const code = await new Promise((resolve, reject) => { child.once("error", reject); child.once("close", resolve); });
     return { code, output, active, notify, liveRequests, enableRequests };
   } finally {
     server.closeAllConnections();
@@ -86,4 +89,19 @@ test("cleanup errors do not replace the original smoke failure", async () => {
   assert.notEqual(result.code, 0);
   assert.match(result.output, /primary disable failure/);
   assert.match(result.output, /cleanup enable failure/);
+});
+
+
+test("smoke command runs from a checkout path containing spaces", async () => {
+  const root = await mkdtemp(join(tmpdir(), "github status smoke-"));
+  try {
+    await mkdir(join(root, "scripts"));
+    const script = join(root, "scripts", "smoke-minimum-host.mjs");
+    await copyFile(new URL("../scripts/smoke-minimum-host.mjs", import.meta.url), script);
+    await cp(new URL("../ui", import.meta.url), join(root, "ui"), { recursive: true });
+    const result = await runSmoke({ scriptURL: pathToFileURL(script) });
+    assert.equal(result.code, 0, result.output);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

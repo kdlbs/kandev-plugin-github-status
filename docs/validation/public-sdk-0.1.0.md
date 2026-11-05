@@ -44,7 +44,7 @@ All commands passed. The selected graph contains public
 `github.com/kdlbs/kandev/pluginsdk v0.1.0`, no backend module, and no
 replacement. Go tests cover the actual `server/...` and host-manifest verifier
 packages; vet covers both. `make test` also passes all 18 UI action tests and
-three smoke-script startup/cleanup regression tests, plus the package,
+four smoke-script startup/cleanup/path regression tests, plus the package,
 release-version, and format-verifier negative checks.
 `make build` invokes the installed-dependency compatibility checker:
 
@@ -169,3 +169,7 @@ Review follow-up adds startup-null and cleanup-failure smoke regressions, a
 relative-package-path regression, field-specific manifest diagnostics, and a
 loaded-panel wait in the native browser test. These are verification changes;
 they do not alter the packaged plugin behavior.
+
+The follow-up review also adds a checkout-path-with-spaces smoke regression and
+makes expected manifest diagnostics explicit table data rather than test-name
+conditions. All four smoke regressions run under `make test`.
