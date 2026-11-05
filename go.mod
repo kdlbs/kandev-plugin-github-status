@@ -2,7 +2,10 @@ module kandev-plugin-github-status
 
 go 1.26.0
 
-require github.com/kdlbs/kandev/pluginsdk v0.1.0
+require (
+	github.com/kdlbs/kandev/pluginsdk v0.1.0
+	gopkg.in/yaml.v3 v3.0.1
+)
 
 require (
 	github.com/fatih/color v1.13.0 // indirect

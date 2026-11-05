@@ -76,6 +76,12 @@ host_executable=$(awk -v platform="$host_platform" \
 for executable in "$host_fixture"/server/*; do
 	[ "$executable" = "$host_fixture/$host_executable" ] || rm "$executable"
 done
+# Current plugin-pack filters the declared executables and normalizes YAML.
+awk -v platform="$host_platform" '
+    /^    [[:alnum:]_-]+: "server\/plugin-/ && $1 != platform ":" { next }
+    { gsub(/"/, ""); print }
+' "$host_fixture/manifest.yaml" > "$host_fixture/manifest.next"
+mv "$host_fixture/manifest.next" "$host_fixture/manifest.yaml"
 write_checksums "$host_fixture"
 sh "$verify_script" "$host_fixture" host "$host_platform" >/dev/null
 

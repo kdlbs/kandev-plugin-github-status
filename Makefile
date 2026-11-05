@@ -17,7 +17,7 @@ build: sdk-check
 test: test-backend test-ui test-package-verifier test-release-version test-format-verifier
 
 test-backend:
-	go test ./server/...
+	go test ./server/... ./scripts/verify-host-manifest
 
 test-ui:
 	node --test tests/ui-action.test.mjs
@@ -42,7 +42,7 @@ sdk-check:
 	go run github.com/kdlbs/kandev/pluginsdk/cmd/kandev-sdk-check@v0.1.0 --manifest manifest.yaml
 
 vet:
-	go vet ./server/...
+	go vet ./server/... ./scripts/verify-host-manifest
 
 ## Cross-compile every platform declared in manifest.yaml and package the exact
 ## runtime binaries, plugin assets, and manifest.
