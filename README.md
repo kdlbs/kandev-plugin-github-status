@@ -276,6 +276,20 @@ push. Both paths verify that the tag, manifest, Makefile, and package versions
 match, then publish `kandev-plugin-github-status-<version>.tar.gz` plus
 `checksums.txt`.
 
+The migration validation record is in
+[`docs/validation/public-sdk-0.1.0.md`](docs/validation/public-sdk-0.1.0.md).
+For a disposable Kandev 0.99.0 instance with the package installed:
+
+```bash
+node scripts/smoke-minimum-host.mjs http://127.0.0.1:38941
+GHS_HOST_URL=http://127.0.0.1:38941 GHS_PLAYWRIGHT_MODULE=playwright \
+  node --test tests/minimum-host-browser.test.mjs
+```
+
+These checks change notification preferences and disable/re-enable the plugin;
+use a disposable instance. The browser integration check reloads between
+lifecycle changes and covers the native Action, modal, refresh and settings.
+
 ### Installing into a running instance
 
 ```bash
