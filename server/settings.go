@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/kandev/kandev/pkg/pluginsdk"
+	"github.com/kdlbs/kandev/pluginsdk"
 )
 
 // settings.go persists the two things this plugin remembers between runs, both

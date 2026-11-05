@@ -1,14 +1,16 @@
 .PHONY: build test test-backend test-ui test-package-verifier test-release-version test-format-verifier \
-	check-format fmt vet package package-host package-file verify-package \
+	check-format fmt vet sdk-check package package-host package-file verify-package \
 	verify-package-host clean
 
 BIN := bin/kandev-plugin-github-status
 VERSION := 0.4.0
 STAGE := .build/stage
 PKG_OUT := kandev-plugin-github-status-$(VERSION).tar.gz
-KANDEV_BACKEND := ../kandev/apps/backend
+# Packaging only: backend-owned plugin-pack at .kandev-tooling-ref.
+# Override with an absolute backend directory for a separate tooling checkout.
+KANDEV_BACKEND ?= ../kandev-tools/apps/backend
 
-build:
+build: sdk-check
 	mkdir -p bin
 	go build -o $(BIN) ./server/...
 
@@ -36,12 +38,15 @@ check-format:
 fmt:
 	gofmt -l .
 
+sdk-check:
+	go run github.com/kdlbs/kandev/pluginsdk/cmd/kandev-sdk-check@v0.1.0 --manifest manifest.yaml
+
 vet:
 	go vet ./server/...
 
 ## Cross-compile every platform declared in manifest.yaml and package the exact
 ## runtime binaries, plugin assets, and manifest.
-package:
+package: sdk-check
 	rm -rf $(STAGE)
 	mkdir -p $(STAGE)/server
 	cp manifest.yaml $(STAGE)/manifest.yaml
@@ -52,19 +57,19 @@ package:
 	GOOS=darwin GOARCH=amd64 go build -o $(STAGE)/server/plugin-darwin-amd64 ./server
 	GOOS=darwin GOARCH=arm64 go build -o $(STAGE)/server/plugin-darwin-arm64 ./server
 	GOOS=windows GOARCH=amd64 go build -o $(STAGE)/server/plugin-windows-amd64.exe ./server
-	go -C $(KANDEV_BACKEND) run ./cmd/plugin-pack -dir $(abspath $(STAGE)) -out $(abspath $(PKG_OUT))
+	go -C "$(KANDEV_BACKEND)" run ./cmd/plugin-pack -dir $(abspath $(STAGE)) -out $(abspath $(PKG_OUT))
 	rm -rf $(STAGE)
 	@echo "Wrote $(PKG_OUT)"
 
 ## Package only the current host platform for a faster local smoke test.
-package-host:
+package-host: sdk-check
 	rm -rf $(STAGE)
 	mkdir -p $(STAGE)/server
 	cp manifest.yaml $(STAGE)/manifest.yaml
 	cp -r assets $(STAGE)/assets
 	cp -r ui $(STAGE)/ui
 	go build -o $(STAGE)/server/plugin-$$(go env GOOS)-$$(go env GOARCH)$$(go env GOEXE) ./server
-	go -C $(KANDEV_BACKEND) run ./cmd/plugin-pack -dir $(abspath $(STAGE)) -out $(abspath $(PKG_OUT)) -platform-only
+	go -C "$(KANDEV_BACKEND)" run ./cmd/plugin-pack -dir $(abspath $(STAGE)) -out $(abspath $(PKG_OUT)) -platform-only
 	rm -rf $(STAGE)
 	@echo "Wrote $(PKG_OUT)"
 

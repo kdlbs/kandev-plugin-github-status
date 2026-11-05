@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kandev/kandev/pkg/pluginsdk"
+	"github.com/kdlbs/kandev/pluginsdk"
 )
 
 // plugin.go is the request-relay half. The UI never talks to githubstatus.com

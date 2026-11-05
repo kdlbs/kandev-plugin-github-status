@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kandev/kandev/pkg/pluginsdk"
+	"github.com/kdlbs/kandev/pluginsdk"
 )
 
 // TestDumpDemoJSON writes every demo fixture's *status webhook payload* to the
