@@ -39,6 +39,9 @@ func TestVerifyHostManifest(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			err := verifyHostManifest(source, []byte(tc.body), "linux-amd64")
+			if tc.name == "API changed" && (err == nil || !strings.Contains(err.Error(), "api_version")) {
+				t.Fatalf("API mismatch diagnostic must name api_version: %v", err)
+			}
 			if (err == nil) != tc.ok {
 				t.Fatalf("error = %v, want success %v", err, tc.ok)
 			}

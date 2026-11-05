@@ -21,7 +21,7 @@ test("installed native UI on the minimum host", { skip: !origin }, async () => {
     if (await skip.isVisible()) await skip.click();
     const actions = page.getByRole("button", { name: "GitHub status", exact: true });
     await actions.first().click();
-    await page.locator(".ghs-root").waitFor();
+    await page.locator(".ghs-root .ghs-refresh").waitFor();
     assert.equal(await page.locator(".ghs-comp").count(), 6);
     assert.match(await page.locator(".ghs-root").innerText(), /4 GitHub services affected/);
     await page.getByRole("button", { name: "Refresh GitHub status", exact: true }).click();

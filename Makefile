@@ -20,7 +20,7 @@ test-backend:
 	go test ./server/... ./scripts/verify-host-manifest
 
 test-ui:
-	node --test tests/ui-action.test.mjs
+	node --test tests/ui-action.test.mjs tests/minimum-host-smoke.test.mjs
 
 test-package-verifier:
 	sh scripts/test-verify-package.sh

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -43,7 +45,23 @@ func verifyHostManifest(source, packaged []byte, platform string) error {
 		}
 	}
 	if !reflect.DeepEqual(expected, actual) {
-		return fmt.Errorf("host manifest differs from source beyond runtime.executables")
+		keys := make(map[string]bool)
+		for key := range expected {
+			keys[key] = true
+		}
+		for key := range actual {
+			keys[key] = true
+		}
+		var changed []string
+		for key := range keys {
+			expectedValue, expectedOK := expected[key]
+			actualValue, actualOK := actual[key]
+			if expectedOK != actualOK || !reflect.DeepEqual(expectedValue, actualValue) {
+				changed = append(changed, key)
+			}
+		}
+		sort.Strings(changed)
+		return fmt.Errorf("host manifest differs from source: %s", strings.Join(changed, ", "))
 	}
 	return nil
 }

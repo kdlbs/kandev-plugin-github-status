@@ -84,6 +84,7 @@ awk -v platform="$host_platform" '
 mv "$host_fixture/manifest.next" "$host_fixture/manifest.yaml"
 write_checksums "$host_fixture"
 sh "$verify_script" "$host_fixture" host "$host_platform" >/dev/null
+(cd "$test_dir" && sh "$verify_script" host-valid host "$host_platform" >/dev/null)
 
 for required in \
 	manifest.yaml assets/icon.svg assets/NOTICE.md \

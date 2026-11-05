@@ -259,9 +259,9 @@ git clone --filter=blob:none --no-checkout https://github.com/kdlbs/kandev.git .
 git -C ../kandev-tools sparse-checkout set apps/backend pluginsdk
 git -C ../kandev-tools checkout --detach "$(cat .kandev-tooling-ref)"
 make verify-package-host   # current host platform
-make verify-package        # all five declared platforms
+CGO_ENABLED=0 make verify-package  # all five declared platforms
 # Or point to the backend in a separate checkout of that same tooling commit:
-# make verify-package KANDEV_BACKEND=/absolute/path/to/kandev-tools/apps/backend
+# CGO_ENABLED=0 make verify-package KANDEV_BACKEND=/absolute/path/to/kandev-tools/apps/backend
 ```
 
 Package verification checks the manifest, exact UI and asset inventory, declared

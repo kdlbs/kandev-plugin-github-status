@@ -15,6 +15,7 @@ package_dir=$1
 mode=$2
 host_platform=${3-}
 [ -d "$package_dir" ] || fail "package directory not found: $package_dir"
+package_dir=$(CDPATH= cd "$package_dir" && pwd)
 
 for required in \
 	manifest.yaml assets/icon.svg assets/NOTICE.md \

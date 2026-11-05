@@ -1,12 +1,10 @@
 # Public SDK 0.1.0 migration validation
 
-Recorded on 2026-11-05 for migration PR #8. The starting default branch was
-`main` at `837b7707ab5c977a49e0d93caf52b47fc9c9fc6b`; the worktree had no
-user changes. This repository and its ancestor task directories contain no
-`AGENTS.md`. The current parent `create-kandev-plugin` workflow, public
+Recorded on 2026-11-05 for migration PR #8, based on default branch `main` at
+`837b7707ab5c977a49e0d93caf52b47fc9c9fc6b`. The public
 [authoring guide](https://github.com/kdlbs/kandev/blob/main/docs/public/plugins-authoring.md)
-and [approved migration handoff](https://github.com/kdlbs/kandev/blob/main/docs/plans/plugin-sdk-publishing/template-migration.md)
-were read before implementation.
+and [migration handoff](https://github.com/kdlbs/kandev/blob/main/docs/plans/plugin-sdk-publishing/template-migration.md)
+define the dependency and packaging contract.
 
 The [verified SDK release](https://github.com/kdlbs/kandev/releases/tag/pluginsdk/v0.1.0)
 resolves to `f0e2e774cfe2df8a0d15e4c21dea7b48580e38fb`. The downloaded
@@ -18,14 +16,13 @@ package manifest, npm lockfile, TypeScript project, or generated protocol
 imports exist here. npm installation/typecheck steps therefore do not apply.
 The UI is a no-build JavaScript bundle using the injected host API.
 
-Validation used Go `1.26.6`, Node `24.19.0`, and Linux amd64. A standalone
-checkout lived at `/tmp/github-status-sdk.1QEIh0/standalone/plugin`; its parent
-contained only that plugin checkout. SDK compilation and tests did not use the
-separate tooling checkout at `/tmp/github-status-sdk.1QEIh0/tooling`.
+Validation used Go `1.26.6`, Node `24.19.0`, and Linux amd64. The commands
+below use a fresh temporary directory; run them from a checkout of this PR.
+The standalone plugin's parent contains only that checkout. The separate
+tooling source is not an SDK compilation input.
 
 ```bash
-# From the task plugin worktree:
-task_tmp=/tmp/github-status-sdk.1QEIh0
+task_tmp="$(mktemp -d)"
 mkdir "$task_tmp/standalone"
 git clone --no-local . "$task_tmp/standalone/plugin"
 cd "$task_tmp/standalone/plugin"
@@ -47,7 +44,8 @@ All commands passed. The selected graph contains public
 `github.com/kdlbs/kandev/pluginsdk v0.1.0`, no backend module, and no
 replacement. Go tests cover the actual `server/...` and host-manifest verifier
 packages; vet covers both. `make test` also passes all 18 UI action tests and
-the package, release-version, and format-verifier negative checks.
+three smoke-script startup/cleanup regression tests, plus the package,
+release-version, and format-verifier negative checks.
 `make build` invokes the installed-dependency compatibility checker:
 
 ```bash
@@ -63,6 +61,10 @@ backend module itself replaces locally. That replacement is confined to the
 packaging tool's module; the plugin consumes the public module.
 
 ```bash
+git clone --filter=blob:none --no-checkout https://github.com/kdlbs/kandev.git \
+  "$task_tmp/tooling"
+git -C "$task_tmp/tooling" sparse-checkout set apps/backend pluginsdk
+git -C "$task_tmp/tooling" checkout --detach "$(cat .kandev-tooling-ref)"
 GOWORK=off make verify-package-host \
   KANDEV_BACKEND="$task_tmp/tooling/apps/backend"
 CGO_ENABLED=0 GOWORK=off make verify-package \
@@ -97,6 +99,14 @@ An empty environment, temporary user home, dedicated Kandev directory, and
 loopback port kept this separate from the developer's running instance:
 
 ```bash
+mkdir -p "$task_tmp/host" "$task_tmp/user-home" "$task_tmp/smoke-home"
+gh release download v0.99.0 --repo kdlbs/kandev \
+  --pattern kandev-linux-x64.tar.gz --pattern kandev-linux-x64.tar.gz.sha256 \
+  --dir "$task_tmp/host"
+(cd "$task_tmp/host" && sha256sum -c kandev-linux-x64.tar.gz.sha256 && \
+  tar -xzf kandev-linux-x64.tar.gz)
+# Run the following server command in another terminal with the same task_tmp
+# value. Return to the plugin checkout after /health responds with HTTP 200.
 env -i HOME="$task_tmp/user-home" PATH="$PATH" \
   KANDEV_HOME_DIR="$task_tmp/smoke-home" KANDEV_SERVER_HOST=127.0.0.1 \
   KANDEV_FEATURES_AUTH=false KANDEV_FEATURES_PLUGINS=true \
@@ -120,8 +130,13 @@ its existing Chromium revision `1228`. On this Nix executor, `LD_LIBRARY_PATH`
 pointed to the existing Nix library directories needed by Chromium. No browser
 or SDK dependencies were added to this plugin's npm graph.
 
+On another runner, provide Chromium's normal platform libraries or set
+`LD_LIBRARY_PATH` to that runner's library directories; no executor-specific
+library-list file is required. Install browser tooling outside the plugin:
+
 ```bash
-export LD_LIBRARY_PATH="$(cat "$task_tmp/browser-libs")"
+npm install --prefix "$task_tmp/browser" --ignore-scripts playwright@1.61.1
+"$task_tmp/browser/node_modules/.bin/playwright" install chromium
 GHS_PLAYWRIGHT_MODULE="$task_tmp/browser/node_modules/playwright" \
   node --test tests/modal-browser.test.mjs
 GHS_HOST_URL=http://127.0.0.1:38941 \
@@ -133,7 +148,10 @@ The offline browser suite passed 14/14 after controlling the harness rejection
 clock: a busy executor could previously miss the 300ms pending-state window.
 The test still asserts the disabled busy control, refresh label, error,
 unchanged provider age, preserved briefing, and enabled final control.
-Production UI and harness code remain unchanged. Earlier optional native-browser
+`tests/modal-browser.test.mjs` changed: it installs a fake clock, pauses before
+the click, asserts the pending state directly, then advances the rejection timer
+and waits for the error. Production files under `ui/` and fixture/harness files
+under `docs/harness/` are unchanged. Earlier optional native-browser
 attempts also timed out during a heavily loaded executor run with minimum-host
 SQLite probe failures and HTTP 503s. The final API and native-browser runs
 passed after restarting the disposable host; the native test passed 1/1.
@@ -146,3 +164,8 @@ registration is covered by the fixture-based UI tests; no live task agent or
 real outage transition was created in this disposable host.
 
 This migration neither publishes a plugin release nor changes catalog versions.
+
+Review follow-up adds startup-null and cleanup-failure smoke regressions, a
+relative-package-path regression, field-specific manifest diagnostics, and a
+loaded-panel wait in the native browser test. These are verification changes;
+they do not alter the packaged plugin behavior.

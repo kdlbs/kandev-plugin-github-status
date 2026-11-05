@@ -28,9 +28,14 @@ assert.equal(installed.api_version, 1);
 assert.equal(installed.min_kandev_version, "0.99.0");
 console.log("PASS minimum host, active subprocess, API v1");
 
-const live = await json(`${plugin}/webhooks/status`);
+let live;
+for (let attempt = 0; attempt < 100; attempt++) {
+  live = await json(`${plugin}/webhooks/status`);
+  if (live.snapshot?.keyComponents?.length === 6) break;
+  await new Promise((resolve) => setTimeout(resolve, 100));
+}
 assert.equal(live.sourceId, "github");
-assert.equal(live.snapshot.keyComponents.length, 6);
+assert.equal(live.snapshot?.keyComponents?.length, 6, "provider snapshot did not become ready");
 assert.equal(live.stale, false);
 console.log("PASS live GitHub poll through Host webhook relay");
 for (const [demo, severity] of Object.entries({ healthy: "operational", degraded: "minor",
@@ -47,6 +52,7 @@ await request(`${plugin}/webhooks/settings`, { ...post(), body: "{", status: 400
 console.log("PASS all demo states, ack, method and body rejection");
 
 const original = await json(`${plugin}/webhooks/settings`, post());
+let failure;
 try {
   assert.equal((await json(`${plugin}/webhooks/settings`, post({ notifyOnTransition: false }))).notifyOnTransition, false);
   await json(`${plugin}/disable`, post());
@@ -59,8 +65,19 @@ try {
   assert.equal((await json(plugin)).status, "active");
   assert.equal((await json(`${plugin}/webhooks/settings`, post())).notifyOnTransition, false);
   console.log("PASS Host state survives subprocess disable/enable");
+} catch (error) {
+  failure = error;
+  throw error;
 } finally {
-  await json(`${plugin}/webhooks/settings`, post(original));
+  try {
+    if ((await json(plugin)).status !== "active") {
+      await json(`${plugin}/enable`, post());
+    }
+    await json(`${plugin}/webhooks/settings`, post(original));
+  } catch (cleanupError) {
+    if (!failure) throw cleanupError;
+    console.error("Smoke cleanup failed:", cleanupError.message);
+  }
 }
 for (const [route, file] of [["bundle", "ui/bundle.js"], ["ui/ui/plugin.css", "ui/plugin.css"]]) {
   const served = await (await request(`${plugin}/${route}`)).text();
