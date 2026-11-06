@@ -293,7 +293,7 @@ lifecycle changes and covers the native Action, modal, refresh and settings.
 ### Installing into a running instance
 
 ```bash
-curl -F "package=@kandev-plugin-github-status-0.4.0.tar.gz" \
+curl -F "package=@kandev-plugin-github-status-0.5.0.tar.gz" \
   http://localhost:38429/api/plugins/install
 ```
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0] - 2026-11-06
+
+### Changed
+
+- test: cover portable smoke paths and explicit diagnostics (5e9cb4f)
+- test: harden migration smoke checks and package verification (ebff2d2)
+- test: record standalone SDK and minimum-host validation (cb8e0a4)
+- test: verify normalized host package manifests semantically (849d009)
+- build: migrate GitHub Status to public plugin SDK v0.1.0 (25e8a9e)
+
+
 ## [0.4.0] - 2026-10-07
 
 ### Changed

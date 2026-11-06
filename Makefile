@@ -3,7 +3,7 @@
 	verify-package-host clean
 
 BIN := bin/kandev-plugin-github-status
-VERSION := 0.4.0
+VERSION := 0.5.0
 STAGE := .build/stage
 PKG_OUT := kandev-plugin-github-status-$(VERSION).tar.gz
 # Packaging only: backend-owned plugin-pack at .kandev-tooling-ref.
