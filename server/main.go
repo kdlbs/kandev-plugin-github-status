@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/kandev/kandev/pkg/pluginsdk"
+	"github.com/kdlbs/kandev/pluginsdk"
 )
 
 func main() {

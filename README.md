@@ -67,8 +67,8 @@ loud, never notified.
 | `plugin-settings` | Settings → Plugins | The notification toggle. |
 
 Hosts that export `host.ui.Action` render the shared responsive action control.
-Older supported hosts select the existing Button fallback through the same
-registrations. The plugin does not declare a new minimum host version.
+Hosts without Action select the existing Button fallback through the same
+registrations. The published Go SDK requires Kandev 0.99.0 or later.
 
 The modal keeps all six monitored services visible. Affected entries have a
 thin full border and a labeled status; healthy entries use quiet divider rows.
@@ -218,37 +218,77 @@ the per-source notification baseline.
 
 ## Development
 
-The Go backend SDK comes from a sibling Kandev checkout. The
-`.kandev-sdk-ref` file pins the checkout to host commit
-`570600439036e81f8e9e1c63f15c4abce8a6c846`, which includes the additive
-Action API. The Go module replacement expects the backend at
-`../kandev/apps/backend`.
+The backend pins the public `github.com/kdlbs/kandev/pluginsdk` module at
+`v0.1.0`. Its installed `sdk-release.json` declares minimum Kandev `0.99.0`
+and manifest API versions 1 and 2; this plugin keeps API version 1 and its own
+version `0.4.0`. SDK, host, and plugin versions are independent.
+
+Compilation and tests need no Kandev source checkout:
 
 ```bash
-git clone https://github.com/kdlbs/kandev.git ../kandev
-git -C ../kandev checkout --detach "$(cat .kandev-sdk-ref)"
 node --version             # use Node 24 for the UI tests
+go mod download
 go mod tidy
+make sdk-check             # checks the installed public SDK and manifest
 make check-format
 make vet
 make test
-make verify-package-host   # current host platform
-make verify-package        # all five declared platforms
+make build
 # With Playwright available, exercise the real bundle and CSS in a browser:
 GHS_PLAYWRIGHT_MODULE=playwright node --test tests/modal-browser.test.mjs
 ```
 
-The test target runs the Go tests, fixture-based UI Action tests, and negative
-tests for package and release verification. Package verification checks the
-manifest, exact UI and asset inventory, declared platform binaries, and every
-SHA-256 entry. The host-only target is the faster local packaging loop.
+The frontend is a no-build JavaScript bundle using the injected host API. It has
+no npm SDK dependency, package manifest, lockfile, or TypeScript typecheck.
+`make test` runs Go tests, fixture-based UI Action tests, and negative tests for
+package, release, and formatting verification.
 
-CI (`.github/workflows/ci.yml`) checks the pinned SDK, module tidiness,
-formatting, vet, and tests. `build.yml` packages and verifies all five
-platforms. `release.yml` accepts a manual patch/minor/major bump or a
-`v*` tag push. Both paths verify that the tag, manifest, Makefile, and package
-versions match, then publish
-`kandev-plugin-github-status-<version>.tar.gz` plus `checksums.txt`.
+Upgrade the SDK deliberately: select a verified public version, update both
+`go.mod` and the `sdk-check` command pin, run `go mod tidy`, inspect the installed
+release record, and update the manifest minimum if needed. Run the compatibility
+checker, all tests, and a smoke test on that minimum host before committing.
+Even a plugin using only a small SDK surface inherits the SDK-wide host floor.
+
+Packaging separately requires backend-owned `plugin-pack`. The
+`.kandev-tooling-ref` pins its tested source commit, independently of the public
+SDK dependency. The backend also needs the source tree's `pluginsdk/` directory
+for its own module replacement. These sources are packaging inputs only:
+
+```bash
+git clone --filter=blob:none --no-checkout https://github.com/kdlbs/kandev.git ../kandev-tools
+git -C ../kandev-tools sparse-checkout set apps/backend pluginsdk
+git -C ../kandev-tools checkout --detach "$(cat .kandev-tooling-ref)"
+make verify-package-host   # current host platform
+CGO_ENABLED=0 make verify-package  # all five declared platforms
+# Or point to the backend in a separate checkout of that same tooling commit:
+# CGO_ENABLED=0 make verify-package KANDEV_BACKEND=/absolute/path/to/kandev-tools/apps/backend
+```
+
+Package verification checks the manifest, exact UI and asset inventory, declared
+platform binaries, and every SHA-256 entry. The host-only target is the faster
+local packaging loop. Both build and packaging run `sdk-check` first.
+
+CI (`.github/workflows/ci.yml`) installs the public module and checks tidiness,
+compatibility, formatting, vet, and tests without a Kandev checkout. `build.yml`
+and `release.yml` retain the separate pinned backend tooling checkout for
+packaging. `release.yml` accepts a manual patch/minor/major bump or a `v*` tag
+push. Both paths verify that the tag, manifest, Makefile, and package versions
+match, then publish `kandev-plugin-github-status-<version>.tar.gz` plus
+`checksums.txt`.
+
+The migration validation record is in
+[`docs/validation/public-sdk-0.1.0.md`](docs/validation/public-sdk-0.1.0.md).
+For a disposable Kandev 0.99.0 instance with the package installed:
+
+```bash
+node scripts/smoke-minimum-host.mjs http://127.0.0.1:38941
+GHS_HOST_URL=http://127.0.0.1:38941 GHS_PLAYWRIGHT_MODULE=playwright \
+  node --test tests/minimum-host-browser.test.mjs
+```
+
+These checks change notification preferences and disable/re-enable the plugin;
+use a disposable instance. The browser integration check reloads between
+lifecycle changes and covers the native Action, modal, refresh and settings.
 
 ### Installing into a running instance
 

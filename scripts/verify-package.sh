@@ -15,6 +15,7 @@ package_dir=$1
 mode=$2
 host_platform=${3-}
 [ -d "$package_dir" ] || fail "package directory not found: $package_dir"
+package_dir=$(CDPATH= cd "$package_dir" && pwd)
 
 for required in \
 	manifest.yaml assets/icon.svg assets/NOTICE.md \
@@ -25,7 +26,7 @@ done
 symlink=$(find "$package_dir" -type l -print -quit)
 [ -z "$symlink" ] || fail "package contains a symlink: ${symlink#"$package_dir"/}"
 
-icon_path=$(sed -nE 's/^icon: "([^"]+)"$/\1/p' "$package_dir/manifest.yaml")
+icon_path=$(sed -nE 's/^icon: "([^"]+)"$/\1/p' "$repo_dir/manifest.yaml")
 [ "$icon_path" = "assets/icon.svg" ] || fail 'manifest icon must be assets/icon.svg'
 
 manifest_executables=$(awk '
@@ -39,7 +40,7 @@ manifest_executables=$(awk '
 		gsub(/"/, "", path)
 		print platform " " path
 	}
-' "$package_dir/manifest.yaml" | LC_ALL=C sort)
+' "$repo_dir/manifest.yaml" | LC_ALL=C sort)
 expected_executables=$(printf '%s\n' \
 	'darwin-amd64 server/plugin-darwin-amd64' \
 	'darwin-arm64 server/plugin-darwin-arm64' \
@@ -68,8 +69,20 @@ for executable in $executable_paths; do
 	[ -f "$package_dir/$executable" ] || fail "missing declared executable: $executable"
 done
 
+case "$mode" in
+	full)
+		cmp "$repo_dir/manifest.yaml" "$package_dir/manifest.yaml" >/dev/null || \
+			fail 'packaged manifest differs from repository source'
+		;;
+	host)
+		go -C "$repo_dir" run ./scripts/verify-host-manifest \
+			"$repo_dir/manifest.yaml" "$package_dir/manifest.yaml" "$host_platform" || \
+			fail 'host manifest differs from the package contract'
+		;;
+esac
+
 for source_file in \
-	manifest.yaml assets/icon.svg assets/NOTICE.md \
+	assets/icon.svg assets/NOTICE.md \
 	ui/bundle.js ui/plugin.css; do
 	cmp "$repo_dir/$source_file" "$package_dir/$source_file" >/dev/null || \
 		fail "packaged file differs from repository source: $source_file"

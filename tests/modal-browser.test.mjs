@@ -190,14 +190,15 @@ test("Refresh busy and failure paths retain provider age and current briefing", 
     });
     const age = await page.locator(".ghs-checked").textContent();
     assert.match(age, /Checked 2m ago/);
+    // Hold the harness rejection timer so a busy runner cannot miss the
+    // 300ms pending state between click completion and the next assertion.
+    await page.clock.install();
+    await page.clock.pauseAt(new Date());
     await button.click();
-    await page.waitForFunction(
-      () => document.querySelector(".ghs-refresh").disabled,
-    );
+    assert.equal(await button.isDisabled(), true);
     assert.match(await button.textContent(), /Refreshing/);
-    await page.waitForFunction(() =>
-      document.querySelector(".ghs-recheck-error"),
-    );
+    await page.clock.runFor(300);
+    await page.locator(".ghs-recheck-error").waitFor();
     assert.match(
       await page.locator(".ghs-recheck-error").textContent(),
       /Could not recheck/,
